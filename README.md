@@ -23,4 +23,11 @@ Local businesses needing consistent communication
 White‑label partners reselling automated content
 
 # License
-MIT License
+Proprietary License (All Rights Reserved)
+
+Copyright (c) 2026 Nicolaas Labuschagne
+
+All rights reserved.
+
+This software and its source code may not be copied, modified, distributed, or used in any form without explicit written permission from the owner.
+
