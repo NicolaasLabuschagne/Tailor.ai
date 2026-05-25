@@ -27,15 +27,23 @@ export default function OnboardingForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Re-structure data for API if needed, keywords string to array
+    const payload = {
+       ...formData,
+       keywords: formData.keywords.split(',').map(k => k.trim()),
+       categories: formData.categories.split(',').map(c => c.trim()).filter(Boolean)
+    };
+
     const response = await fetch('/api/business-profile', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData),
+      body: JSON.stringify(payload),
     });
     if (response.ok) {
       window.location.href = '/dashboard';
     } else {
-      alert('Failed to save profile');
+      const error = await response.json();
+      alert('Failed to save profile: ' + (error.error || 'Unknown error'));
     }
   };
 
@@ -58,7 +66,7 @@ export default function OnboardingForm() {
               <label className="block text-sm font-medium text-gray-700">Website URL</label>
               <input type="url" name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required />
             </div>
-            <button type="button" onClick={nextStep} className="bg-blue-600 text-white px-4 py-2 rounded-md">Next</button>
+            <button type="button" onClick={nextStep} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Next</button>
           </div>
         )}
 
@@ -77,8 +85,8 @@ export default function OnboardingForm() {
               <input type="text" name="tone" value={formData.tone} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required />
             </div>
             <div className="flex space-x-2">
-              <button type="button" onClick={prevStep} className="bg-gray-300 px-4 py-2 rounded-md">Back</button>
-              <button type="button" onClick={nextStep} className="bg-blue-600 text-white px-4 py-2 rounded-md">Next</button>
+              <button type="button" onClick={prevStep} className="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400">Back</button>
+              <button type="button" onClick={nextStep} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Next</button>
             </div>
           </div>
         )}
@@ -102,8 +110,8 @@ export default function OnboardingForm() {
               <input type="text" name="keywords" value={formData.keywords} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required />
             </div>
             <div className="flex space-x-2">
-              <button type="button" onClick={prevStep} className="bg-gray-300 px-4 py-2 rounded-md">Back</button>
-              <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-md">Complete Onboarding</button>
+              <button type="button" onClick={prevStep} className="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400">Back</button>
+              <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700">Complete Onboarding</button>
             </div>
           </div>
         )}

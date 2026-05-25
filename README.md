@@ -69,3 +69,6 @@ Trigger crons manually using curl (requires `CRON_SECRET` header):
 - All cron routes are secured via shared secret.
 - Unsubscribe links use HMAC-signed tokens with 31-day expiry.
 - Multi-tenant data isolation enforced via NextAuth session validation.
+
+## Development Login
+In development mode, you can ensure a test user exists by visiting `/api/auth/dev-login`. Use `dev@example.com` to sign in. In a development environment without a real SMTP server, check the console output of the `npm run dev` process to find the magic link URL.

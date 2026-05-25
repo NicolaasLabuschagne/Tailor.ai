@@ -1,10 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AVAILABLE_TOPICS } from '@/lib/topics';
+import { useSession } from 'next-auth/react';
 
 export default function IndividualOnboarding() {
+  const { data: session, status } = useSession();
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -16,6 +18,20 @@ export default function IndividualOnboarding() {
   });
 
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (status === 'unauthenticated') {
+      router.push('/api/auth/signin?callbackUrl=/onboard/individual');
+    }
+  }, [status, router]);
+
+  if (status === 'loading') {
+    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  }
+
+  if (!session) {
+    return null;
+  }
 
   const toggleTopic = (slug: string) => {
     setFormData(prev => ({
