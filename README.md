@@ -8,6 +8,7 @@ Tailor automatically transforms real-world news into personalized promotional ne
 - **Approval Portal:** One-click approval flow with AI-driven "Request Edit" capabilities.
 - **Subscriber Management:** Manage your audience and import existing subscribers.
 - **Analytics Dashboard:** Visual performance tracking for sent newsletters and subscriber growth.
+- **Secure Auth:** Email/Password registration and login, with Magic Link support.
 
 ## Architecture Overview
 
@@ -66,9 +67,7 @@ Trigger crons manually using curl (requires `CRON_SECRET` header):
 - **Analytics:** Open and click rate tracking requires Resend webhook setup — currently shows placeholder data.
 
 ## Security
+- Registration and Login supported via email/password or magic links.
 - All cron routes are secured via shared secret.
 - Unsubscribe links use HMAC-signed tokens with 31-day expiry.
 - Multi-tenant data isolation enforced via NextAuth session validation.
-
-## Development Login
-In development mode, you can ensure a test user exists by visiting `/api/auth/dev-login`. Use `dev@example.com` to sign in. In a development environment without a real SMTP server, check the console output of the `npm run dev` process to find the magic link URL.
