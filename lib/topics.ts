@@ -1,0 +1,22 @@
+export const AVAILABLE_TOPICS = [
+  { slug: 'ai-machine-learning', label: 'AI & Machine Learning', keywords: ['artificial intelligence', 'machine learning', 'neural networks', 'LLM'] },
+  { slug: 'fintech', label: 'Fintech & Banking', keywords: ['fintech', 'banking', 'crypto', 'blockchain', 'payments'] },
+  { slug: 'renewable-energy', label: 'Renewable Energy', keywords: ['solar', 'wind energy', 'sustainability', 'green energy'] },
+  { slug: 'healthcare-tech', label: 'Healthcare Tech', keywords: ['digital health', 'medtech', 'biotech', 'health innovation'] },
+  { slug: 'ecommerce', label: 'E-commerce Trends', keywords: ['ecommerce', 'retail tech', 'direct to consumer', 'shopify'] },
+  { slug: 'cybersecurity', label: 'Cybersecurity', keywords: ['cybersecurity', 'data breach', 'hacking', 'infosec'] },
+  { slug: 'venture-capital', label: 'Venture Capital', keywords: ['venture capital', 'startup funding', 'series A', 'IPO'] },
+  { slug: 'saas', label: 'SaaS Business', keywords: ['SaaS', 'cloud computing', 'software as a service', 'B2B software'] },
+  { slug: 'future-of-work', label: 'Future of Work', keywords: ['remote work', 'hybrid work', 'productivity', 'workplace trends'] },
+  { slug: 'space-exploration', label: 'Space Exploration', keywords: ['spacex', 'nasa', 'space tech', 'satellites'] },
+  { slug: 'electric-vehicles', label: 'Electric Vehicles', keywords: ['EV', 'tesla', 'electric cars', 'battery tech'] },
+  { slug: 'gaming-industry', label: 'Gaming Industry', keywords: ['video games', 'gaming tech', 'esports', 'metaverse'] },
+  { slug: 'digital-marketing', label: 'Digital Marketing', keywords: ['SEO', 'content marketing', 'adtech', 'social media trends'] },
+  { slug: 'foodtech', label: 'Food & AgTech', keywords: ['foodtech', 'agtech', 'alternative protein', 'vertical farming'] },
+  { slug: 'biotechnology', label: 'Biotechnology', keywords: ['biotech', 'gene editing', 'crispr', 'drug discovery'] },
+  { slug: 'robotics', label: 'Robotics', keywords: ['robotics', 'automation', 'drones', 'humanoid robots'] },
+  { slug: 'quantum-computing', label: 'Quantum Computing', keywords: ['quantum computing', 'quantum physics', 'qubits'] },
+  { slug: 'real-estate-tech', label: 'Real Estate Tech', keywords: ['proptech', 'real estate innovation', 'smart home'] },
+  { slug: 'education-tech', label: 'EdTech', keywords: ['edtech', 'online learning', 'education innovation'] },
+  { slug: 'climate-tech', label: 'Climate Tech', keywords: ['carbon capture', 'climate change tech', 'emissions reduction'] }
+];
