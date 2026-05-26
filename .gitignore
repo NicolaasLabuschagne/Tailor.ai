@@ -5,5 +5,5 @@ dist
 build
 *.log
 .DS_Store
-
+.env
 /generated/prisma
