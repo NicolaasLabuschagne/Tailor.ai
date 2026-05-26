@@ -14,6 +14,7 @@ export default function OnboardingForm() {
     productsServices: '',
     currentOffers: '',
     websiteUrl: '',
+    newsletterTagline: '',
     keywords: '',
     categories: '',
   });
@@ -65,6 +66,10 @@ export default function OnboardingForm() {
             <div>
               <label className="block text-sm font-medium text-gray-700">Website URL</label>
               <input type="url" name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Newsletter Tagline</label>
+              <input type="text" name="newsletterTagline" value={formData.newsletterTagline} onChange={handleChange} placeholder="e.g. Weekly industry update, Monthly roundup" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required />
             </div>
             <button type="button" onClick={nextStep} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Next</button>
           </div>

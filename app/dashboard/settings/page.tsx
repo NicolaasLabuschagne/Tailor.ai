@@ -37,6 +37,10 @@ export default async function SettingsPage() {
                 <label className="block text-sm font-medium text-gray-700">Industry</label>
                 <p className="mt-1 text-md text-gray-900">{profile.industry}</p>
               </div>
+              <div className="sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Newsletter Tagline</label>
+                <p className="mt-1 text-md text-gray-900">{profile.newsletterTagline}</p>
+              </div>
             </div>
           </div>
 

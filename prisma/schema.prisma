@@ -79,6 +79,7 @@ model BusinessProfile {
   productsServices String
   currentOffers    String
   websiteUrl       String
+  newsletterTagline String @default("Weekly update")
   newsletterJobs   NewsletterJob[]
   subscribers      Subscriber[]
   newsSource       NewsSource?
