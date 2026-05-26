@@ -1,45 +1,39 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { Anthropic } from '@anthropic-ai/sdk';
-import { Resend } from 'resend';
 
 export async function GET() {
-  const status: Record<string, string> = {
+  const status = {
     database: 'unknown',
-    anthropic: 'unknown',
+    gemini: 'unknown',
     newsapi: 'unknown',
     resend: 'unknown',
   };
 
-  // Check Database
   try {
     await prisma.$queryRaw`SELECT 1`;
     status.database = 'connected';
-  } catch (e) {
+  } catch (err) {
     status.database = 'error';
   }
 
-  // Check Anthropic
   try {
-    if (!process.env.ANTHROPIC_API_KEY) throw new Error();
-    status.anthropic = 'configured';
-  } catch (e) {
-    status.anthropic = 'not configured';
+    if (!process.env.GEMINI_API_KEY) throw new Error();
+    status.gemini = 'configured';
+  } catch (err) {
+    status.gemini = 'not configured';
   }
 
-  // Check NewsAPI
   try {
     if (!process.env.NEWSAPI_KEY) throw new Error();
     status.newsapi = 'configured';
-  } catch (e) {
+  } catch (err) {
     status.newsapi = 'not configured';
   }
 
-  // Check Resend
   try {
     if (!process.env.RESEND_API_KEY) throw new Error();
     status.resend = 'configured';
-  } catch (e) {
+  } catch (err) {
     status.resend = 'not configured';
   }
 

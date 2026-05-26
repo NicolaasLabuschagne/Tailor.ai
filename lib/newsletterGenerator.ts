@@ -1,10 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk';
 import prisma from './prisma';
 import { fetchNewsForBusiness } from './ingestion';
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+import { generateContent } from './gemini';
 
 export async function generateNewsletter(jobId: string) {
   const job = await prisma.newsletterJob.findUnique({
@@ -52,14 +48,7 @@ Write a newsletter with:
 
 Format as clean, inline-styled HTML compatible with Gmail and Outlook.`;
 
-  const message = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
-    max_tokens: 4000,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }],
-  });
-
-  const content = message.content[0].type === 'text' ? message.content[0].text : '';
+  const content = await generateContent(systemPrompt, userPrompt);
 
   const subjectMatch = content.match(/<!-- SUBJECT: (.*?) -->/);
   const previewMatch = content.match(/<!-- PREVIEW: (.*?) -->/);

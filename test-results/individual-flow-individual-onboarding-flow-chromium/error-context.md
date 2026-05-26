@@ -12,21 +12,14 @@
 # Error details
 
 ```
-Error: expect(locator).toContainText(expected) failed
-
-Locator: locator('h2')
-Expected substring: "Personalize Your Briefing"
-Timeout: 5000ms
-Error: element(s) not found
-
-Call log:
-  - Expect "toContainText" with timeout 5000ms
-  - waiting for locator('h2')
-
+Test timeout of 30000ms exceeded.
 ```
 
-```yaml
-- text: Internal Server Error
+```
+Error: page.goto: net::ERR_ABORTED; maybe frame was detached?
+Call log:
+  - navigating to "http://localhost:3006/onboard/individual", waiting until "load"
+
 ```
 
 # Test source
@@ -35,9 +28,9 @@ Call log:
   1  | import { test, expect } from '@playwright/test';
   2  |
   3  | test('individual onboarding flow', async ({ page }) => {
-  4  |   await page.goto('/onboard/individual');
-> 5  |   await expect(page.locator('h2')).toContainText('Personalize Your Briefing');
-     |                                    ^ Error: expect(locator).toContainText(expected) failed
+> 4  |   await page.goto('/onboard/individual');
+     |              ^ Error: page.goto: net::ERR_ABORTED; maybe frame was detached?
+  5  |   await expect(page.locator('h2')).toContainText('Personalize Your Briefing');
   6  |
   7  |   await page.fill('input[placeholder="e.g. Alex"]', 'Test User');
   8  |   await page.click('text=Next: Choose Topics');

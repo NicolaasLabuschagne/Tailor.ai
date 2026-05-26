@@ -12,21 +12,14 @@
 # Error details
 
 ```
-Error: expect(locator).toContainText(expected) failed
-
-Locator: locator('h2')
-Expected substring: "Create your account"
-Timeout: 5000ms
-Error: element(s) not found
-
-Call log:
-  - Expect "toContainText" with timeout 5000ms
-  - waiting for locator('h2')
-
+Test timeout of 30000ms exceeded.
 ```
 
-```yaml
-- text: Internal Server Error
+```
+Error: page.goto: net::ERR_ABORTED; maybe frame was detached?
+Call log:
+  - navigating to "http://localhost:3006/auth/register", waiting until "load"
+
 ```
 
 # Test source
@@ -35,9 +28,9 @@ Call log:
   1  | import { test, expect } from '@playwright/test';
   2  |
   3  | test('registration and sign-in redirection', async ({ page }) => {
-  4  |   await page.goto('/auth/register');
-> 5  |   await expect(page.locator('h2')).toContainText('Create your account');
-     |                                    ^ Error: expect(locator).toContainText(expected) failed
+> 4  |   await page.goto('/auth/register');
+     |              ^ Error: page.goto: net::ERR_ABORTED; maybe frame was detached?
+  5  |   await expect(page.locator('h2')).toContainText('Create your account');
   6  |
   7  |   await page.goto('/auth/signin');
   8  |   await expect(page.locator('h2')).toContainText('Sign in to Tailor');

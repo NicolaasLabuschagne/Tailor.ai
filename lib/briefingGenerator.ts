@@ -1,10 +1,6 @@
-import Anthropic from '@anthropic-ai/sdk';
 import prisma from './prisma';
 import { fetchNewsForTopic } from './ingestion';
-
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+import { generateContent } from './gemini';
 
 export async function generateBriefing(profileId: string) {
   const profile = await prisma.individualProfile.findUnique({
@@ -67,20 +63,11 @@ Use this EXACT HTML/CSS template structure:
   </body>
 </html>`;
 
-  const message = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
-    max_tokens: 4000,
-    system: systemPrompt,
-    messages: [{ role: 'user', content: userPrompt }],
-  });
-
-  const content = message.content[0].type === 'text' ? message.content[0].text : '';
+  const content = await generateContent(systemPrompt, userPrompt);
 
   const subjectMatch = content.match(/<!-- SUBJECT: (.*?) -->/);
   const subject = subjectMatch ? subjectMatch[1] : `Your Executive Briefing - ${new Date().toLocaleDateString()}`;
 
-  // Extract only the body content if AI returned the whole thing, or just the part between comments
-  // In reality, we want the AI to fill the template. We'll wrap its content in the template here.
   const mainContent = content.replace(/<!-- SUBJECT: .*? -->/, '').trim();
 
   const finalHtml = `
