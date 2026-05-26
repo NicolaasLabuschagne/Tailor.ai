@@ -5,30 +5,23 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 export default function AnalyticsPage() {
   const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // In a real app, fetch from /api/analytics
-    // Mocking for now as per instructions
-    setData({
-      stats: [
-        { label: 'Total Sent', value: 124 },
-        { label: 'Open Rate', value: '24.5%' },
-        { label: 'Click Rate', value: '3.2%' },
-        { label: 'Approval Rate', value: '92%' }
-      ],
-      chartData: [
-        { name: 'Mon', sent: 12, opens: 8 },
-        { name: 'Tue', sent: 19, opens: 12 },
-        { name: 'Wed', sent: 15, opens: 10 },
-        { name: 'Thu', sent: 22, opens: 18 },
-        { name: 'Fri', sent: 30, opens: 21 },
-        { name: 'Sat', sent: 10, opens: 5 },
-        { name: 'Sun', sent: 16, opens: 12 },
-      ]
-    });
+    fetch('/api/analytics')
+      .then(res => res.json())
+      .then(json => {
+        if (!json.error) setData(json);
+        setLoading(false);
+      })
+      .catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
   }, []);
 
-  if (!data) return <div className="p-8">Loading analytics...</div>;
+  if (loading) return <div className="p-8 text-center">Loading real-time analytics...</div>;
+  if (!data) return <div className="p-8 text-center text-red-500">Failed to load analytics. Please ensure your profile is set up.</div>;
 
   return (
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
@@ -45,7 +38,7 @@ export default function AnalyticsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Newsletter Engagement</h2>
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Newsletter Engagement (Estimate)</h2>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={data.chartData}>
@@ -53,15 +46,15 @@ export default function AnalyticsPage() {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="sent" stroke="#4f46e5" />
-                <Line type="monotone" dataKey="opens" stroke="#10b981" />
+                <Line type="monotone" dataKey="sent" stroke="#4f46e5" strokeWidth={2} />
+                <Line type="monotone" dataKey="opens" stroke="#10b981" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-4">Subscriber Growth</h2>
+          <h2 className="text-lg font-medium text-gray-900 mb-4">Delivery Volume</h2>
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data.chartData}>
