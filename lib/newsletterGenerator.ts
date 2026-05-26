@@ -69,6 +69,12 @@ Format as clean, inline-styled HTML compatible with Gmail and Outlook.`;
       subject,
       previewText,
       htmlContent,
+      logs: {
+        create: {
+          event: job.editNote ? 'REGENERATED' : 'GENERATED',
+          message: job.editNote ? `Regenerated with note: ${job.editNote}` : 'Newsletter content generated successfully'
+        }
+      }
     },
   });
 

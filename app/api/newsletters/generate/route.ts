@@ -11,7 +11,14 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { jobId, editNote } = await req.json().catch(() => ({}));
+    let jobId, editNote;
+    try {
+      const body = await req.json();
+      jobId = body.jobId;
+      editNote = body.editNote;
+    } catch (e) {
+      // Fallback for form submissions
+    }
 
     if (jobId) {
       // Regenerate existing job
@@ -21,8 +28,8 @@ export async function POST(req: Request) {
           data: { editNote, status: 'GENERATING' }
         });
       }
-      const result = await generateNewsletter(jobId);
-      return NextResponse.json(result);
+      await generateNewsletter(jobId);
+      return NextResponse.redirect(new URL('/dashboard/newsletters', req.url));
     } else {
       // Create new job
       const user = await prisma.user.findUnique({
@@ -41,8 +48,8 @@ export async function POST(req: Request) {
         }
       });
 
-      const result = await generateNewsletter(job.id);
-      return NextResponse.json(result);
+      await generateNewsletter(job.id);
+      return NextResponse.redirect(new URL('/dashboard/newsletters', req.url));
     }
   } catch (error: any) {
     console.error('Generation failed:', error);

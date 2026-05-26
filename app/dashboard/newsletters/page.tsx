@@ -7,7 +7,7 @@ import StatusBadge from '@/components/StatusBadge';
 
 export default async function NewslettersPage() {
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email) redirect('/api/auth/signin');
+  if (!session?.user?.email) redirect('/auth/signin');
 
   const businessProfile = await prisma.businessProfile.findFirst({
     where: { user: { email: session.user.email } },

@@ -20,11 +20,19 @@ export async function sendNewsletter(jobId: string) {
   if (job.status === 'SENT') return [];
   if (job.status === 'FAILED') return [];
 
-  // Lock job
-  await prisma.newsletterJob.update({
-    where: { id: jobId },
+  // Atomic lock job
+  const updatedJob = await prisma.newsletterJob.updateMany({
+    where: {
+      id: jobId,
+      status: { not: 'PROCESSING' }
+    },
     data: { status: 'PROCESSING' }
   });
+
+  if (updatedJob.count === 0) {
+    console.log(`Job ${jobId} is already being processed or already finished.`);
+    return [];
+  }
 
   try {
     const subscribers = await prisma.subscriber.findMany({
@@ -39,35 +47,43 @@ export async function sendNewsletter(jobId: string) {
     if (subscribers.length === 0) {
       await prisma.newsletterJob.update({
         where: { id: jobId },
-        data: { status: 'SENT', sentAt: new Date() }
+        data: {
+          status: 'SENT',
+          sentAt: new Date(),
+          logs: {
+            create: { event: 'SENT', message: 'Newsletter delivery complete (no more subscribers)' }
+          }
+        }
       });
       return [];
     }
 
-    const results = await Promise.all(
-      subscribers.map(async (subscriber) => {
-        const token = generateSignedToken(subscriber.id);
-        const unsubscribeUrl = `${process.env.NEXTAUTH_URL}/api/unsubscribe?token=${token}`;
+    const results = [];
+    for (const subscriber of subscribers) {
+      const token = generateSignedToken(subscriber.id);
+      const unsubscribeUrl = `${process.env.NEXTAUTH_URL}/api/unsubscribe?token=${token}`;
 
-        const html = job.htmlContent!.replace('{{UNSUBSCRIBE_LINK}}', unsubscribeUrl);
+      const html = job.htmlContent!.replace('{{UNSUBSCRIBE_LINK}}', unsubscribeUrl);
 
-        try {
-          await resend.emails.send({
-            from: `${job.businessProfile.businessName} <newsletters@resend.dev>`,
-            to: subscriber.email,
-            subject: job.subject!,
-            html: html,
-          });
-          return { success: true, subscriberId: subscriber.id };
-        } catch (error: any) {
-          console.error(`Failed to send to ${subscriber.email}:`, error);
-          if (error.status === 429) {
-             throw new Error('Rate limit exceeded');
-          }
-          return { success: false, subscriberId: subscriber.id, error };
+      try {
+        await resend.emails.send({
+          from: `${job.businessProfile.businessName} <newsletters@resend.dev>`,
+          to: subscriber.email,
+          subject: job.subject!,
+          html: html,
+        });
+        results.push({ success: true, subscriberId: subscriber.id });
+      } catch (error: any) {
+        console.error(`Failed to send to ${subscriber.email}:`, error);
+        if (error.status === 429) {
+           throw new Error('Rate limit exceeded');
         }
-      })
-    );
+        results.push({ success: false, subscriberId: subscriber.id, error });
+      }
+
+      // Mandatory 500ms delay between emails to avoid rate limits
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
 
     const successCount = results.filter(r => r.success).length;
     const newSentCount = job.sentCount + subscribers.length;
@@ -77,13 +93,21 @@ export async function sendNewsletter(jobId: string) {
       where: { businessProfileId: job.businessProfileId, status: 'ACTIVE' }
     });
 
+    const isFinished = newSentCount >= totalSubscribers;
+
     await prisma.newsletterJob.update({
       where: { id: jobId },
       data: {
         sentCount: { increment: successCount },
         totalRecipients: totalSubscribers,
-        status: newSentCount >= totalSubscribers ? 'SENT' : 'APPROVED',
-        sentAt: newSentCount >= totalSubscribers ? new Date() : null
+        status: isFinished ? 'SENT' : 'APPROVED',
+        sentAt: isFinished ? new Date() : null,
+        logs: {
+          create: {
+            event: isFinished ? 'SENT' : 'PROCESSING',
+            message: `Sent to ${successCount} subscribers. Total sent: ${newSentCount}/${totalSubscribers}`
+          }
+        }
       },
     });
 
@@ -94,7 +118,10 @@ export async function sendNewsletter(jobId: string) {
       where: { id: jobId },
       data: {
         status: 'FAILED',
-        errorMessage: error.message || 'Unknown error during batch sending'
+        errorMessage: error.message || 'Unknown error during batch sending',
+        logs: {
+          create: { event: 'FAILED', message: error.message || 'Batch sending failed' }
+        }
       }
     });
     throw error;

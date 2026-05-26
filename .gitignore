@@ -1,9 +1,9 @@
 node_modules
-.vs/
 .next
+.env
 dist
 build
 *.log
 .DS_Store
-.env
+
 /generated/prisma
