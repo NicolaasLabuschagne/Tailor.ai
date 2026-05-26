@@ -1,6 +1,6 @@
 import prisma from './prisma';
 import { fetchNewsForTopic } from './ingestion';
-import { generateContent } from './gemini';
+import { generateContent } from './groq';
 
 export async function generateBriefing(profileId: string) {
   const profile = await prisma.individualProfile.findUnique({

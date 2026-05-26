@@ -1,6 +1,6 @@
 import prisma from './prisma';
 import { fetchNewsForBusiness } from './ingestion';
-import { generateContent } from './gemini';
+import { generateContent } from './groq';
 
 export async function generateNewsletter(jobId: string) {
   const job = await prisma.newsletterJob.findUnique({
