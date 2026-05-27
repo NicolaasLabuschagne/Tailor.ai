@@ -39,8 +39,8 @@ export async function POST(req: NextRequest) {
       data: {
         userId: user.id,
         displayName,
-        deliveryFrequency,
-        deliveryTime,
+        deliveryFrequency: deliveryFrequency,
+        deliveryTime: deliveryTime,
         topics: {
           create: selectedTopics.map((slug: string) => {
             const topic = AVAILABLE_TOPICS.find(t => t.slug === slug);

@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import SettingsForm from '@/components/SettingsForm';
+import Link from 'next/link';
 
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions);
@@ -22,6 +23,16 @@ export default async function SettingsPage() {
       <h1 className="text-2xl font-semibold text-gray-900 mb-8">Settings</h1>
 
       <div className="space-y-8">
+        <div className="bg-indigo-600 rounded-lg p-6 text-white flex justify-between items-center shadow-lg">
+           <div>
+             <h2 className="text-xl font-bold">Newsletter Design</h2>
+             <p className="text-indigo-100 text-sm">Customize colors, fonts, and logos for your automated newsletters.</p>
+           </div>
+           <Link href="/dashboard/settings/templates" className="bg-white text-indigo-600 px-4 py-2 rounded-md font-medium hover:bg-indigo-50">
+             Customize Design &rarr;
+           </Link>
+        </div>
+
         <div>
           <h2 className="text-lg font-medium text-gray-900 mb-4">Business Profile</h2>
           <SettingsForm initialProfile={user.businessProfile as any} />

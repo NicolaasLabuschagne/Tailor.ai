@@ -7,7 +7,7 @@ export async function generateNewsletter(jobId: string) {
     where: { id: jobId },
     include: {
       businessProfile: {
-        include: { newsSource: true, user: true }
+        include: { newsSource: true, user: true, template: true }
       }
     },
   });
@@ -19,6 +19,13 @@ export async function generateNewsletter(jobId: string) {
   const monthYear = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const industryShortLabel = job.businessProfile.industry.split(' ')[0] || job.businessProfile.industry;
   const ctaUrl = job.businessProfile.websiteUrl || '[your website link]';
+  const template = job.businessProfile.template || {
+    primaryColor: '#1a1a1a',
+    secondaryColor: '#ffffff',
+    fontHeader: 'Arial, sans-serif',
+    fontBody: 'Georgia, Times New Roman, serif',
+    logoUrl: null
+  };
 
   const systemPromptTemplate = `You are a professional newsletter copywriter. You write in the brand voice
 of the business provided. Your job is to take real news articles and reframe
@@ -30,20 +37,19 @@ Output only valid HTML using these exact inline
 styles. Do not invent your own design. Structure:
 
 <div style='max-width:560px;margin:0 auto;
-  background:#ffffff;font-family:Georgia,
-  Times New Roman,serif'>
+  background:${template.secondaryColor};font-family:${template.fontBody}'>
 
   <!-- HEADER -->
-  <div style='background:#1a1a1a;padding:
-    24px 32px'>
-    <p style='margin:0 0 4px;font-family:Arial,
-      sans-serif;font-size:10px;font-weight:700;
+  <div style='background:${template.primaryColor};padding:
+    24px 32px;text-align:center'>
+    ${template.logoUrl ? `<img src="${template.logoUrl}" style="height:32px;margin-bottom:8px">` : ''}
+    <p style='margin:0 0 4px;font-family:${template.fontHeader};font-size:10px;font-weight:700;
       letter-spacing:.15em;color:#888;
       text-transform:uppercase'>
       {businessName}
     </p>
     <p style='margin:0;font-size:11px;
-      font-family:Arial,sans-serif;color:#555'>
+      font-family:${template.fontHeader};color:#555'>
       {newsletterTagline} · {monthYear}
     </p>
   </div>
@@ -51,7 +57,7 @@ styles. Do not invent your own design. Structure:
   <!-- CONTENT -->
   <div style='padding:32px 32px 0'>
     <p style='margin:0 0 20px;font-size:13px;
-      font-family:Arial,sans-serif;color:#888;
+      font-family:${template.fontHeader};color:#888;
       font-weight:700;letter-spacing:.1em;
       text-transform:uppercase;border-bottom:
       1px solid #eee;padding-bottom:12px'>
@@ -59,8 +65,9 @@ styles. Do not invent your own design. Structure:
     </p>
 
     <h1 style='margin:0 0 12px;font-size:22px;
+      font-family:${template.fontHeader};
       font-weight:400;line-height:1.3;
-      color:#1a1a1a'>
+      color:${template.primaryColor}'>
       {storyHeadline}
     </h1>
 
@@ -74,7 +81,7 @@ styles. Do not invent your own design. Structure:
     <!-- Optional pull quote if the story has
          a strong stat or quote worth highlighting -->
     <div style='background:#f9f9f7;border-left:
-      3px solid #1a1a1a;padding:16px 20px;
+      3px solid ${template.primaryColor};padding:16px 20px;
       margin:0 0 28px;border-radius:0 4px 4px 0'>
       <p style='margin:0;font-size:14px;
         line-height:1.6;color:#444;
@@ -89,10 +96,9 @@ styles. Do not invent your own design. Structure:
 
   <!-- OFFER BLOCK -->
   <div style='margin:24px 32px 32px;
-    background:#1a1a1a;border-radius:6px;
+    background:${template.primaryColor};border-radius:6px;
     padding:24px'>
-    <p style='margin:0 0 4px;font-family:Arial,
-      sans-serif;font-size:10px;font-weight:700;
+    <p style='margin:0 0 4px;font-family:${template.fontHeader};font-size:10px;font-weight:700;
       letter-spacing:.12em;color:#888;
       text-transform:uppercase'>
       From {businessName}
@@ -102,8 +108,8 @@ styles. Do not invent your own design. Structure:
       {offerText}
     </p>
     <a href='{ctaUrl}' style='display:inline-block;
-      background:#ffffff;color:#1a1a1a;
-      font-family:Arial,sans-serif;font-size:13px;
+      background:${template.secondaryColor};color:${template.primaryColor};
+      font-family:${template.fontHeader};font-size:13px;
       font-weight:700;padding:10px 20px;
       border-radius:4px;text-decoration:none'>
       {ctaLabel} →
@@ -113,8 +119,7 @@ styles. Do not invent your own design. Structure:
   <!-- FOOTER -->
   <div style='padding:16px 32px 24px;
     border-top:1px solid #eee'>
-    <p style='margin:0;font-family:Arial,
-      sans-serif;font-size:11px;color:#aaa'>
+    <p style='margin:0;font-family:${template.fontHeader};font-size:11px;color:#aaa'>
       You're receiving this from {businessName}
       &nbsp;·&nbsp;
       <a href='{{UNSUBSCRIBE_LINK}}'

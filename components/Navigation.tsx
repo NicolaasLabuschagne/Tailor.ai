@@ -21,8 +21,6 @@ export default async function Navigation() {
   const hasBusiness = !!user.businessProfile;
   const hasIndividual = !!user.individualProfile;
 
-  if (!hasBusiness && !hasIndividual) return null;
-
   return (
     <nav className="bg-white border-b border-gray-200">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -74,7 +72,7 @@ export default async function Navigation() {
 
           <div className="flex items-center">
             <span className="text-sm text-gray-500 mr-4">{session.user.name || session.user.email}</span>
-            <Link href="/api/auth/signout" className="text-sm font-medium text-indigo-600 hover:text-indigo-500">
+            <Link href="/api/auth/signout" className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
               Sign out
             </Link>
           </div>

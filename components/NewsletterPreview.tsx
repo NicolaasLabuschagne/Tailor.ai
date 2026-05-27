@@ -98,19 +98,24 @@ export default function NewsletterPreview({ job, onDeleted, onStatusUpdate }: Ne
              Delete
            </button>
            {job.status === 'AWAITING_APPROVAL' && (
-             <div className="flex items-center space-x-2 bg-gray-50 p-1 rounded border">
-               <input
-                 type="datetime-local"
-                 value={scheduledAt}
-                 onChange={(e) => setScheduledAt(e.target.value)}
-                 className="text-[10px] border-none bg-transparent focus:ring-0"
-               />
-               <button onClick={handleReject} className="px-3 py-1 text-xs font-medium text-gray-600 hover:bg-white rounded shadow-sm border">
-                 Deny
-               </button>
-               <button onClick={handleApprove} className="px-4 py-1 text-xs font-medium bg-green-600 text-white rounded hover:bg-green-700 shadow-sm">
-                 Schedule
-               </button>
+             <div className="flex flex-col sm:flex-row items-center space-x-0 sm:space-x-2 bg-gray-50 p-2 rounded border">
+               <div className="flex items-center space-x-1 mb-2 sm:mb-0">
+                  <label className="text-[9px] uppercase font-bold text-gray-400">Schedule:</label>
+                  <input
+                    type="datetime-local"
+                    value={scheduledAt}
+                    onChange={(e) => setScheduledAt(e.target.value)}
+                    className="text-[11px] border border-gray-300 rounded px-1 py-0.5 bg-white focus:ring-indigo-500 focus:border-indigo-500"
+                  />
+               </div>
+               <div className="flex items-center space-x-2">
+                  <button onClick={handleReject} className="px-3 py-1 text-xs font-medium text-gray-600 hover:bg-white rounded shadow-sm border">
+                    Deny
+                  </button>
+                  <button onClick={handleApprove} className="px-4 py-1 text-xs font-medium bg-green-600 text-white rounded hover:bg-green-700 shadow-sm transition-colors">
+                    Approve & Schedule
+                  </button>
+               </div>
              </div>
            )}
            {job.status === 'REJECTED' && (

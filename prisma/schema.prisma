@@ -84,8 +84,22 @@ model BusinessProfile {
   newsletterJobs   NewsletterJob[]
   subscribers      Subscriber[]
   newsSource       NewsSource?
+  template         NewsletterTemplate?
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+}
+
+model NewsletterTemplate {
+  id                String          @id @default(cuid())
+  businessProfileId String          @unique
+  businessProfile   BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  primaryColor      String          @default("#1a1a1a")
+  secondaryColor    String          @default("#ffffff")
+  fontHeader        String          @default("Arial, sans-serif")
+  fontBody          String          @default("Georgia, Times New Roman, serif")
+  logoUrl           String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 }
 
 model NewsletterJob {

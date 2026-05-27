@@ -111,7 +111,10 @@ export default function IndividualOnboarding() {
             <label className="block text-sm font-medium text-gray-700">Delivery Frequency</label>
             <select
               value={formData.deliveryFrequency}
-              onChange={e => setFormData({ ...formData, deliveryFrequency: e.target.value })}
+              onChange={e => {
+                console.log("Setting frequency to:", e.target.value);
+                setFormData({ ...formData, deliveryFrequency: e.target.value });
+              }}
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
             >
               <option value="daily">Daily</option>
