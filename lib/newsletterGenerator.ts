@@ -224,7 +224,40 @@ ${job.editNote ? `Client Feedback to address: ${job.editNote}` : ''}
 Today's relevant news articles:
 ${articles.map(a => `- ${a.title}: ${a.description} (${a.source})`).join('\n')}`;
 
-  const content = await generateContent(systemPrompt, userPrompt);
+  let promptToUse = userPrompt;
+  let systemPromptToUse = systemPrompt;
+
+  if (job.businessProfile.templateHtml) {
+    systemPromptToUse = `You are a professional newsletter copywriter. Your job is to take news articles and reframe them for the provided business.
+    Return ONLY a JSON object with the following structure:
+    {
+      "subject": "Compelling subject line",
+      "topicLabel": "Short industry label (e.g. TECH)",
+      "headline": "Main story headline",
+      "paragraphs": ["First paragraph", "Second paragraph", "Third paragraph"],
+      "pullQuote": "A strong stat or quote from the story",
+      "connectionParagraph": "Natural bridge to the business work",
+      "offerText": "The promotional offer text",
+      "ctaLabel": "Action-oriented button text"
+    }
+
+    CRITICAL: If you receive fewer than 2 real news articles, respond with exactly:
+    { "error": "insufficient_articles" }`;
+
+    promptToUse = `Generate the newsletter content as JSON for ${job.businessProfile.businessName}.
+    Target audience: ${job.businessProfile.targetAudience}
+    Current offer: ${job.businessProfile.currentOffers}
+
+    Rules:
+    - Exactly ONE story
+    - 250-350 words total in paragraphs
+    - No filler sentences
+
+    Articles:
+    ${articles.map(a => `- ${a.title}: ${a.description}`).join('\n')}`;
+  }
+
+  const content = await generateContent(systemPromptToUse, promptToUse);
 
   try {
     const parsed = JSON.parse(content);
@@ -246,14 +279,54 @@ ${articles.map(a => `- ${a.title}: ${a.description} (${a.source})`).join('\n')}`
     // Proceed as newsletter
   }
 
-  const subjectMatch = content.match(/<!-- SUBJECT: (.*?) -->/);
-  const subject = subjectMatch ? subjectMatch[1] : `Latest from ${job.businessProfile.businessName}`;
-  const previewText = ""; // Preview text not explicitly requested in new structure but good to have empty if not matched
+  let subject, htmlContent;
 
-  // Clean up markers from HTML
-  const htmlContent = content
-    .replace(/<!-- SUBJECT: .*? -->/, '')
-    .trim();
+  if (job.businessProfile.templateHtml) {
+    try {
+      const data = JSON.parse(content);
+      if (data.error === 'insufficient_articles') {
+        // Handled below by catch or already matched
+      }
+
+      subject = data.subject;
+      let shell = job.businessProfile.templateHtml;
+
+      const replacements: Record<string, string> = {
+        '{{SUBJECT}}': data.subject,
+        '{{TOPIC_LABEL}}': data.topicLabel,
+        '{{HEADLINE}}': data.headline,
+        '{{PARAGRAPH_1}}': data.paragraphs[0] || '',
+        '{{PARAGRAPH_2}}': data.paragraphs[1] || '',
+        '{{PARAGRAPH_3}}': data.paragraphs[2] || '',
+        '{{PULL_QUOTE}}': data.pullQuote,
+        '{{CONNECTION}}': data.connectionParagraph,
+        '{{OFFER_TEXT}}': data.offerText,
+        '{{CTA_LABEL}}': data.ctaLabel,
+        '{{BUSINESS_NAME}}': job.businessProfile.businessName,
+        '{{WEBSITE_URL}}': job.businessProfile.websiteUrl || '#',
+      };
+
+      for (const [key, val] of Object.entries(replacements)) {
+        shell = shell.replace(new RegExp(key, 'g'), val);
+      }
+
+      htmlContent = shell;
+    } catch (e) {
+      console.error("Failed to parse JSON content for template:", e);
+      // Fallback logic or error
+      throw new Error("AI failed to provide valid JSON for template");
+    }
+  } else {
+    const subjectMatch = content.match(/<!-- SUBJECT: (.*?) -->/);
+    subject = subjectMatch ? subjectMatch[1] : `Latest from ${job.businessProfile.businessName}`;
+
+    // Clean up markers from HTML
+    htmlContent = content
+      .replace(/<!-- SUBJECT: .*? -->/, '')
+      .trim();
+  }
+
+  const previewText = "";
 
   await prisma.newsletterJob.update({
     where: { id: jobId },

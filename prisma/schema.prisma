@@ -85,6 +85,8 @@ model BusinessProfile {
   subscribers      Subscriber[]
   newsSource       NewsSource?
   template         NewsletterTemplate?
+  templateHtml     String?         @db.Text
+  templateJson     String?         @db.Text
   createdAt        DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 }

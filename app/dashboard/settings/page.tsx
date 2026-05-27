@@ -29,7 +29,7 @@ export default async function SettingsPage() {
              <h2 className="text-xl font-bold">Newsletter Design</h2>
              <p className="text-indigo-100 text-sm">Customize colors, fonts, and logos for your automated newsletters.</p>
            </div>
-           <Link href="/dashboard/settings/templates" className="bg-white text-indigo-600 px-4 py-2 rounded-md font-medium hover:bg-indigo-50">
+           <Link href="/dashboard/design" className="bg-white text-indigo-600 px-4 py-2 rounded-md font-medium hover:bg-indigo-50">
              Customize Design &rarr;
            </Link>
         </div>

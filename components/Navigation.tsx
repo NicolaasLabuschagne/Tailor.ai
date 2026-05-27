@@ -44,6 +44,9 @@ export default async function Navigation() {
                   <Link href="/dashboard/subscribers" className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">
                     Subscribers
                   </Link>
+                  <Link href="/dashboard/design" className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">
+                    Design
+                  </Link>
                   <Link href="/dashboard/analytics" className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">
                     Analytics
                   </Link>
