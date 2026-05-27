@@ -1,5 +1,27 @@
 import { RawArticle } from './types';
 
+const KEYWORD_SYNONYMS: Record<string, string[]> = {
+  "software": ["tech", "SaaS", "app", "developer", "programming", "code", "platform", "digital"],
+  "website": ["web", "online", "digital", "internet", "site", "SEO", "web design"],
+  "marketing": ["advertising", "brand", "campaign", "social media", "content", "SEO", "growth"],
+  "real estate": ["housing", "property", "mortgage", "home sales", "rental", "realty"],
+  "restaurant": ["food", "dining", "hospitality", "menu", "chef", "eatery"],
+  "retail": ["store", "shop", "consumer", "ecommerce", "shopping", "sales"],
+  "healthcare": ["health", "medical", "clinical", "patient", "hospital", "pharma"],
+  "finance": ["financial", "banking", "investment", "economy", "market", "fiscal"],
+  "construction": ["building", "contractor", "housing", "infrastructure", "development"],
+  "legal": ["law", "attorney", "court", "regulation", "compliance", "legislation"],
+};
+
+export function expandKeywords(keywords: string[]): string[] {
+  const expanded = new Set(keywords);
+  keywords.forEach(kw => {
+    const synonyms = KEYWORD_SYNONYMS[kw.toLowerCase()];
+    if (synonyms) synonyms.forEach(s => expanded.add(s));
+  });
+  return Array.from(expanded);
+}
+
 const BLOCKED_DOMAINS = [
   "wsj.com",       // hard paywall
   "ft.com",        // hard paywall
@@ -18,6 +40,8 @@ export function filterAndRank(
   keywords: string[],
   maxResults: number = 5
 ): RawArticle[] {
+  const expandedKeywords = expandKeywords(keywords);
+
   // Step 1: Remove garbage
   const cleaned = articles.filter(a =>
     a.title?.length > 20 &&
@@ -44,7 +68,7 @@ export function filterAndRank(
 
   // Step 4 & 5: Scoring and Freshness
   const scored = unique.map(a => {
-    let score = scoreArticle(a, keywords);
+    let score = scoreArticle(a, expandedKeywords);
 
     const ageHours = (Date.now() - a.publishedAt.getTime()) / (1000 * 60 * 60);
     if (ageHours < 6) score += 2;

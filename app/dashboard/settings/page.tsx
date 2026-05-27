@@ -4,6 +4,7 @@ import prisma from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import SettingsForm from '@/components/SettingsForm';
 import Link from 'next/link';
+import IngestionTester from '@/components/IngestionTester';
 
 export default async function SettingsPage() {
   const session = await getServerSession(authOptions);
@@ -36,6 +37,7 @@ export default async function SettingsPage() {
         <div>
           <h2 className="text-lg font-medium text-gray-900 mb-4">Business Profile</h2>
           <SettingsForm initialProfile={user.businessProfile as any} />
+          <IngestionTester />
         </div>
 
         <div className="bg-white shadow rounded-lg p-6">

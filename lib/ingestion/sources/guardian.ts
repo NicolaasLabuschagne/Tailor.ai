@@ -1,9 +1,9 @@
 import axios from 'axios';
 import { RawArticle } from '../types';
 
-export async function fetchGuardian(keywords: string[]): Promise<RawArticle[]> {
+export async function fetchGuardian(keywords: string[], hoursCutoff: number = 24): Promise<RawArticle[]> {
   try {
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const cutoff = new Date(Date.now() - hoursCutoff * 60 * 60 * 1000).toISOString();
     const q = keywords.join(' OR ');
 
     const response = await axios.get('https://content.guardianapis.com/search', {
@@ -13,7 +13,7 @@ export async function fetchGuardian(keywords: string[]): Promise<RawArticle[]> {
         'production-office': 'us',
         'show-fields': 'trailText,thumbnail',
         'page-size': 10,
-        'from-date': yesterday,
+        'from-date': cutoff,
         'q': q
       }
     });

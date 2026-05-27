@@ -1,6 +1,7 @@
 import prisma from './prisma';
 import { fetchNewsForBusiness } from './ingestion';
 import { generateContent } from './groq';
+import { sendNoNewsNotification } from './emailDelivery';
 
 export async function generateNewsletter(jobId: string) {
   const job = await prisma.newsletterJob.findUnique({
@@ -15,6 +16,29 @@ export async function generateNewsletter(jobId: string) {
   if (!job) throw new Error('Job not found');
 
   const articles = await fetchNewsForBusiness(job.businessProfile);
+
+  const totalContent = articles
+    .map(a => a.title + a.description)
+    .join(" ");
+
+  if (!articles || articles.length === 0 || totalContent.length < 200) {
+    await prisma.newsletterJob.update({
+      where: { id: job.id },
+      data: {
+        status: "FAILED",
+        errorMessage: "No news articles found for this business profile. Check keywords and news sources in Settings, or broaden your topic keywords.",
+        logs: {
+          create: {
+            event: 'FAILED',
+            message: 'Ingestion returned 0 or insufficient articles — generation skipped'
+          }
+        }
+      }
+    });
+
+    await sendNoNewsNotification(job.businessProfileId);
+    return;
+  }
 
   const monthYear = new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
   const industryShortLabel = job.businessProfile.industry.split(' ')[0] || job.businessProfile.industry;
@@ -32,6 +56,15 @@ of the business provided. Your job is to take real news articles and reframe
 them to be relevant and valuable to the business's audience, while
 naturally connecting the news to the business's products or services.
 Always write as if you are the business owner speaking directly to their customers.
+
+CRITICAL RULE: If you receive fewer than 2
+real news articles, respond with only this
+exact JSON and nothing else:
+{ "error": "insufficient_articles" }
+
+Do NOT write a newsletter. Do NOT apologize.
+Do NOT explain. Just return that JSON.
+The application will handle the failure.
 
 Output only valid HTML using these exact inline
 styles. Do not invent your own design. Structure:
@@ -192,6 +225,26 @@ Today's relevant news articles:
 ${articles.map(a => `- ${a.title}: ${a.description} (${a.source})`).join('\n')}`;
 
   const content = await generateContent(systemPrompt, userPrompt);
+
+  try {
+    const parsed = JSON.parse(content);
+    if (parsed.error === 'insufficient_articles') {
+      await prisma.newsletterJob.update({
+        where: { id: jobId },
+        data: {
+          status: 'FAILED',
+          errorMessage: 'Groq reported insufficient articles',
+          logs: {
+            create: { event: 'FAILED', message: 'Groq reported insufficient articles' }
+          }
+        }
+      });
+      await sendNoNewsNotification(job.businessProfileId);
+      return;
+    }
+  } catch (e) {
+    // Proceed as newsletter
+  }
 
   const subjectMatch = content.match(/<!-- SUBJECT: (.*?) -->/);
   const subject = subjectMatch ? subjectMatch[1] : `Latest from ${job.businessProfile.businessName}`;

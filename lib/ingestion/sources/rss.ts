@@ -78,9 +78,9 @@ export const GENERAL_US_FEEDS = [
   "https://feeds.a.dj.com/rss/RSSWorldNews.xml",
 ];
 
-export async function fetchRSS(urls: string[], keywords: string[]): Promise<RawArticle[]> {
+export async function fetchRSS(urls: string[], keywords: string[], hoursCutoff: number = 24): Promise<RawArticle[]> {
   const articles: RawArticle[] = [];
-  const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const cutoff = new Date(Date.now() - hoursCutoff * 60 * 60 * 1000);
 
   const results = await Promise.allSettled(urls.map(url => parser.parseURL(url)));
 
@@ -89,7 +89,7 @@ export async function fetchRSS(urls: string[], keywords: string[]): Promise<RawA
       const feed = result.value;
       for (const item of feed.items) {
         const pubDate = item.pubDate ? new Date(item.pubDate) : new Date();
-        if (pubDate < yesterday) continue;
+        if (pubDate < cutoff) continue;
 
         const description = item.contentSnippet || item.content || '';
         const cleanDescription = he.decode(description.replace(/<[^>]*>?/gm, '')).trim();

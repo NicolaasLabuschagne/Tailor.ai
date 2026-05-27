@@ -11,22 +11,35 @@ export async function fetchNewsForBusiness(
 ): Promise<RawArticle[]> {
   const keywords = profile.newsSource?.keywords || [];
 
+  // Try with 24h window first
+  const recent = await fetchNewsFromAllSources(keywords, 24);
+  const filteredRecent = filterAndRank(recent, keywords, 5);
+
+  if (filteredRecent.length >= 3) {
+    return filteredRecent;
+  }
+
+  // Not enough fresh content — widen to 72h window
+  console.log(`Only ${filteredRecent.length} articles in 24h — extending to 72h window for ${profile.businessName}`);
+  const fallback = await fetchNewsFromAllSources(keywords, 72);
+  return filterAndRank(fallback, keywords, 5);
+}
+
+async function fetchNewsFromAllSources(keywords: string[], hours: number): Promise<RawArticle[]> {
   const [rssResults, newsapiResults, guardianResults, nytResults] =
     await Promise.allSettled([
-      fetchRSS(GENERAL_US_FEEDS, keywords),
-      fetchNewsAPI({ keywords, language: "en", country: "us" }),
-      fetchGuardian(keywords),
-      fetchNYT(keywords),
+      fetchRSS(GENERAL_US_FEEDS, keywords, hours),
+      fetchNewsAPI({ keywords, language: "en", country: "us" }), // NewsAPI doesn't easily support dynamic hours but defaults to recent
+      fetchGuardian(keywords, hours),
+      fetchNYT(keywords), // NYT doesn't easily support dynamic hours but returns recent
     ]);
 
-  const all = [
+  return [
     ...(rssResults.status === "fulfilled" ? rssResults.value : []),
     ...(newsapiResults.status === "fulfilled" ? newsapiResults.value : []),
     ...(guardianResults.status === "fulfilled" ? guardianResults.value : []),
     ...(nytResults.status === "fulfilled" ? nytResults.value : []),
   ];
-
-  return filterAndRank(all, keywords, 5);
 }
 
 export async function fetchNewsForTopic(

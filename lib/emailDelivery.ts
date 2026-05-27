@@ -136,6 +136,40 @@ function generateSignedToken(subscriberId: string): string {
   return Buffer.from(JSON.stringify({ subscriberId, expiresAt, signature })).toString('base64');
 }
 
+export async function sendNoNewsNotification(businessProfileId: string) {
+  const profile = await prisma.businessProfile.findUnique({
+    where: { id: businessProfileId },
+    include: { user: true }
+  });
+  if (!profile) return;
+
+  await resend.emails.send({
+    from: "Tailor <notifications@resend.dev>",
+    to: profile.user.email,
+    subject: "This week's newsletter wasn't generated",
+    html: `
+      <div style="font-family:Arial,sans-serif; max-width:480px; margin:0 auto; padding:32px; color:#333">
+        <p style="font-size:15px; line-height:1.6; margin:0 0 16px">
+          Hi ${profile.user.name ?? "there"},
+        </p>
+        <p style="font-size:15px; line-height:1.6; margin:0 0 16px">
+          We couldn't find any relevant news articles for <strong>${profile.businessName}</strong> this week, so no newsletter was generated.
+        </p>
+        <p style="font-size:15px; line-height:1.6; margin:0 0 24px">
+          This usually means your topic keywords are too specific or no matching stories ran this week. Try adding broader keywords in your settings.
+        </p>
+        <a href="${process.env.NEXTAUTH_URL}/dashboard/settings"
+          style="display:inline-block; background:#1a1a1a; color:#fff; font-size:13px; font-weight:700; padding:10px 20px; border-radius:4px; text-decoration:none">
+          Update my keywords →
+        </a>
+        <p style="font-size:12px; color:#aaa; margin-top:32px">
+          Tailor will try again at the next scheduled send time.
+        </p>
+      </div>
+    `
+  });
+}
+
 export function verifyUnsubscribeToken(token: string): string | null {
   try {
     const { subscriberId, expiresAt, signature } = JSON.parse(Buffer.from(token, 'base64').toString());
