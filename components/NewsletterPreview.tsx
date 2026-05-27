@@ -21,15 +21,25 @@ export default function NewsletterPreview({ job, onDeleted, onStatusUpdate }: Ne
   const [view, setView] = React.useState<'desktop' | 'mobile'>('desktop');
   const [editNote, setEditNote] = React.useState('');
   const [isRegenerating, setIsRegenerating] = React.useState(false);
+  const [scheduledAt, setScheduledAt] = React.useState('');
 
   const handleApprove = async () => {
-    await fetch(`/api/newsletters/approve`, {
+    if (!scheduledAt) {
+       alert('Please select a schedule time.');
+       return;
+    }
+    const res = await fetch(`/api/newsletters/approve`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ jobId: job.id }),
+      body: JSON.stringify({ jobId: job.id, scheduledAt }),
     });
-    if (onStatusUpdate) onStatusUpdate('APPROVED');
-    else window.location.reload();
+    if (res.ok) {
+       if (onStatusUpdate) onStatusUpdate('APPROVED');
+       else window.location.reload();
+    } else {
+       const err = await res.json();
+       alert(err.error || 'Failed to schedule');
+    }
   };
 
   const handleReject = async () => {
@@ -83,19 +93,25 @@ export default function NewsletterPreview({ job, onDeleted, onStatusUpdate }: Ne
           </div>
         </div>
 
-        <div className="flex space-x-2">
+        <div className="flex items-center space-x-2">
            <button onClick={handleDelete} className="px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50 rounded">
              Delete
            </button>
            {job.status === 'AWAITING_APPROVAL' && (
-             <>
-               <button onClick={handleReject} className="px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded">
+             <div className="flex items-center space-x-2 bg-gray-50 p-1 rounded border">
+               <input
+                 type="datetime-local"
+                 value={scheduledAt}
+                 onChange={(e) => setScheduledAt(e.target.value)}
+                 className="text-[10px] border-none bg-transparent focus:ring-0"
+               />
+               <button onClick={handleReject} className="px-3 py-1 text-xs font-medium text-gray-600 hover:bg-white rounded shadow-sm border">
                  Deny
                </button>
-               <button onClick={handleApprove} className="px-4 py-1 text-xs font-medium bg-green-600 text-white rounded hover:bg-green-700">
-                 Approve & Schedule
+               <button onClick={handleApprove} className="px-4 py-1 text-xs font-medium bg-green-600 text-white rounded hover:bg-green-700 shadow-sm">
+                 Schedule
                </button>
-             </>
+             </div>
            )}
            {job.status === 'REJECTED' && (
               <button
@@ -119,7 +135,7 @@ export default function NewsletterPreview({ job, onDeleted, onStatusUpdate }: Ne
               title="Newsletter Preview"
               className="w-full h-full border-none"
               style={{ minHeight: '800px' }}
-              sandbox="allow-scripts" // Sandbox to prevent top level navigation but allow styles/scripts
+              sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox" // Allow links to open in new tabs
             />
           ) : (
             <div className="flex items-center justify-center h-full text-gray-400 italic">
