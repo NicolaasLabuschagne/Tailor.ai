@@ -136,7 +136,10 @@ export default function TemplateEditor({ initialDesign, onSave }: Props) {
               panels: { tools: { dock: 'left' } }
             },
             features: {
-              textEditor: { spellChecker: true, cleanPaste: true }
+              textEditor: { spellChecker: true, cleanPaste: true },
+              imageEditor: { enabled: true },
+              // @ts-ignore - Unlayer supports background images but types might be missing it
+              backgroundImages: { enabled: true }
             },
             fonts: {
               showDefaultFonts: true,
