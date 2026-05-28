@@ -2,6 +2,7 @@ import prisma from './prisma';
 import { fetchNewsForBusiness } from './ingestion';
 import { generateContent } from './groq';
 import { sendNoNewsNotification } from './emailDelivery';
+import { JSDOM } from 'jsdom';
 
 export async function generateNewsletter(jobId: string) {
   const job = await prisma.newsletterJob.findUnique({
@@ -227,7 +228,9 @@ ${articles.map(a => `- ${a.title}: ${a.description} (${a.source})`).join('\n')}`
   let promptToUse = userPrompt;
   let systemPromptToUse = systemPrompt;
 
-  if (job.businessProfile.templateHtml) {
+  const isCustomTemplate = job.businessProfile.activeTemplateSource === 'unlayer' || job.businessProfile.activeTemplateSource === 'pasted';
+
+  if (isCustomTemplate) {
     systemPromptToUse = `You are a professional newsletter copywriter. Your job is to take news articles and reframe them for the provided business.
     Return ONLY a JSON object with the following structure:
     {
@@ -281,7 +284,7 @@ ${articles.map(a => `- ${a.title}: ${a.description} (${a.source})`).join('\n')}`
 
   let subject, htmlContent;
 
-  if (job.businessProfile.templateHtml) {
+  if (isCustomTemplate) {
     try {
       const data = JSON.parse(content);
       if (data.error === 'insufficient_articles') {
@@ -289,7 +292,45 @@ ${articles.map(a => `- ${a.title}: ${a.description} (${a.source})`).join('\n')}`
       }
 
       subject = data.subject;
-      let shell = job.businessProfile.templateHtml;
+      let shell = job.businessProfile.activeTemplateSource === 'pasted'
+        ? job.businessProfile.pastedTemplateHtml!
+        : job.businessProfile.templateHtml!;
+
+      const contentMap = job.businessProfile.activeTemplateSource === 'pasted'
+        ? JSON.parse(job.businessProfile.pastedTemplateMap!)
+        : null;
+
+      if (job.businessProfile.activeTemplateSource === 'pasted' && contentMap) {
+         const dom = new JSDOM(shell);
+         const doc = dom.window.document;
+
+         const inject = (selector: string | null, value: string, attr?: string) => {
+           if (!selector || !value) return;
+           const el = doc.querySelector(selector);
+           if (el) {
+             if (attr) el.setAttribute(attr, value);
+             else el.textContent = value;
+           }
+         };
+
+         inject(contentMap.headline, data.headline);
+         inject(contentMap.paragraph1, data.paragraphs[0]);
+         inject(contentMap.paragraph2, data.paragraphs[1]);
+         inject(contentMap.paragraph3, data.paragraphs[2]);
+         inject(contentMap.offerText, data.offerText);
+         inject(contentMap.ctaLabel, data.ctaLabel);
+         inject(contentMap.ctaHref, job.businessProfile.websiteUrl || '#', 'href');
+         inject(contentMap.topicLabel, data.topicLabel);
+
+         // Always inject unsubscribe link into generic footer links if found
+         doc.querySelectorAll('a').forEach(a => {
+           if (a.textContent?.toLowerCase().includes('unsubscribe')) {
+             a.setAttribute('href', '{{UNSUBSCRIBE_LINK}}');
+           }
+         });
+
+         shell = dom.serialize();
+      }
 
       const replacements: Record<string, string> = {
         '{{SUBJECT}}': data.subject,

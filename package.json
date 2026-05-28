@@ -33,6 +33,7 @@
     "date-fns": "^4.3.0",
     "groq-sdk": "^1.2.0",
     "he": "^1.2.0",
+    "jsdom": "^29.1.1",
     "lucide-react": "^1.16.0",
     "next": "^14.2.35",
     "next-auth": "^4.24.14",
@@ -53,6 +54,7 @@
     "@playwright/test": "^1.60.0",
     "@types/bcryptjs": "^2.4.6",
     "@types/he": "^1.2.3",
+    "@types/jsdom": "^28.0.3",
     "@types/node": "^25.9.1",
     "dotenv": "^17.4.2",
     "ts-node": "^10.9.2"
