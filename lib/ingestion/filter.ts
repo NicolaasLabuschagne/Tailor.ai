@@ -74,6 +74,10 @@ export function filterAndRank(
     if (ageHours < 6) score += 2;
     else if (ageHours < 12) score += 1;
 
+    if (a.isTrending) {
+       score += 8;
+    }
+
     return { ...a, relevanceScore: score };
   });
 

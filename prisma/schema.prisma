@@ -90,6 +90,7 @@ model BusinessProfile {
   pastedTemplateHtml   String?         @db.Text
   pastedTemplateMap    String?         @db.Text
   activeTemplateSource String          @default("generated")
+  includeTrending      Boolean         @default(true)
   createdAt            DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 }

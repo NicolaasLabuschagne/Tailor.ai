@@ -5,6 +5,7 @@ export interface RawArticle {
   source: string
   publishedAt: Date
   relevanceScore?: number
+  isTrending?: boolean;
 }
 
 export interface IngestionQuery {

@@ -16,7 +16,13 @@ export async function generateNewsletter(jobId: string) {
 
   if (!job) throw new Error('Job not found');
 
-  const articles = await fetchNewsForBusiness(job.businessProfile);
+  let articles = await fetchNewsForBusiness(job.businessProfile);
+
+  if (!job.businessProfile.includeTrending) {
+    articles = articles.filter(a => !a.isTrending);
+  }
+
+  const topStoryIsTrending = articles[0]?.isTrending;
 
   const totalContent = articles
     .map(a => a.title + a.description)
@@ -247,9 +253,19 @@ ${articles.map(a => `- ${a.title}: ${a.description} (${a.source})`).join('\n')}`
     CRITICAL: If you receive fewer than 2 real news articles, respond with exactly:
     { "error": "insufficient_articles" }`;
 
+    const trendingInstruction = topStoryIsTrending ? `
+    IMPORTANT: The top story this week is a viral trending story that may not directly relate to ${job.businessProfile.businessName}'s industry. This is intentional.
+
+    Your job is to find the most clever, natural connection between this trending story and the business. Think like a smart columnist — what angle makes this story relevant to ${job.businessProfile.targetAudience}?
+
+    Be creative. The connection should feel insightful, not forced.
+    ` : '';
+
     promptToUse = `Generate the newsletter content as JSON for ${job.businessProfile.businessName}.
     Target audience: ${job.businessProfile.targetAudience}
     Current offer: ${job.businessProfile.currentOffers}
+
+    ${trendingInstruction}
 
     Rules:
     - Exactly ONE story

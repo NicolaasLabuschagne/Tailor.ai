@@ -4,6 +4,7 @@ import { fetchRSS, GENERAL_US_FEEDS, TOPIC_FEEDS } from './sources/rss';
 import { fetchNewsAPI } from './sources/newsapi';
 import { fetchGuardian } from './sources/guardian';
 import { fetchNYT } from './sources/nyt';
+import { fetchTrending } from './sources/trending';
 import { filterAndRank } from './filter';
 
 export async function fetchNewsForBusiness(
@@ -26,12 +27,13 @@ export async function fetchNewsForBusiness(
 }
 
 async function fetchNewsFromAllSources(keywords: string[], hours: number): Promise<RawArticle[]> {
-  const [rssResults, newsapiResults, guardianResults, nytResults] =
+  const [rssResults, newsapiResults, guardianResults, nytResults, trendingResults] =
     await Promise.allSettled([
       fetchRSS(GENERAL_US_FEEDS, keywords, hours),
-      fetchNewsAPI({ keywords, language: "en", country: "us" }), // NewsAPI doesn't easily support dynamic hours but defaults to recent
+      fetchNewsAPI({ keywords, language: "en", country: "us" }),
       fetchGuardian(keywords, hours),
-      fetchNYT(keywords), // NYT doesn't easily support dynamic hours but returns recent
+      fetchNYT(keywords),
+      fetchTrending(),
     ]);
 
   return [
@@ -39,6 +41,7 @@ async function fetchNewsFromAllSources(keywords: string[], hours: number): Promi
     ...(newsapiResults.status === "fulfilled" ? newsapiResults.value : []),
     ...(guardianResults.status === "fulfilled" ? guardianResults.value : []),
     ...(nytResults.status === "fulfilled" ? nytResults.value : []),
+    ...(trendingResults.status === "fulfilled" ? trendingResults.value : []),
   ];
 }
 

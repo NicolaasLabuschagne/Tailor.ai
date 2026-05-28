@@ -13,6 +13,7 @@ interface BusinessProfile {
   currentOffers: string;
   websiteUrl: string;
   newsletterTagline: string;
+  includeTrending: boolean;
 }
 
 interface Props {
@@ -25,7 +26,8 @@ export default function SettingsForm({ initialProfile }: Props) {
   const [message, setMessage] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setProfile({ ...profile, [e.target.name]: e.target.value });
+    const value = e.target.type === 'checkbox' ? (e.target as HTMLInputElement).checked : e.target.value;
+    setProfile({ ...profile, [e.target.name]: value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,6 +156,24 @@ export default function SettingsForm({ initialProfile }: Props) {
             onChange={handleChange}
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
           />
+        </div>
+        <div className="sm:col-span-2 bg-gray-50 p-4 rounded-md border border-gray-200">
+           <div className="flex items-start">
+              <div className="flex items-center h-5">
+                 <input
+                   id="includeTrending"
+                   name="includeTrending"
+                   type="checkbox"
+                   checked={profile.includeTrending}
+                   onChange={handleChange}
+                   className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                 />
+              </div>
+              <div className="ml-3 text-sm">
+                 <label htmlFor="includeTrending" className="font-medium text-gray-700 text-base">Include viral/trending stories</label>
+                 <p className="text-gray-500">Surface popular stories from Reddit and Hacker News even if they don't directly match your keywords. Our AI will find a clever bridge to your business.</p>
+              </div>
+           </div>
         </div>
       </div>
 
