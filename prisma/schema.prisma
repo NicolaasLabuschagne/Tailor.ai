@@ -12,6 +12,13 @@ enum Role {
   CLIENT
 }
 
+enum TemplateSource {
+  AI_GENERATED
+  CUSTOM
+  UNLAYER
+  PASTED
+}
+
 enum NewsletterStatus {
   PENDING
   GENERATING
@@ -85,6 +92,7 @@ model BusinessProfile {
   subscribers      Subscriber[]
   newsSource       NewsSource?
   template         NewsletterTemplate?
+  templateSlots        TemplateSlot[]
   templateHtml         String?         @db.Text
   templateJson         String?         @db.Text
   pastedTemplateHtml   String?         @db.Text
@@ -93,6 +101,18 @@ model BusinessProfile {
   includeTrending      Boolean         @default(true)
   createdAt            DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
+}
+
+model TemplateSlot {
+  id                String          @id @default(cuid())
+  businessProfileId String
+  businessProfile   BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  name              String
+  html              String          @db.Text
+  json              String?         @db.Text
+  source            TemplateSource  @default(CUSTOM)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 }
 
 model NewsletterTemplate {

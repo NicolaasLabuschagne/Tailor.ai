@@ -304,13 +304,16 @@ ${articles.map(a => `- ${a.title}: ${a.description} (${a.source})`).join('\n')}`
     try {
       const data = JSON.parse(content);
       if (data.error === 'insufficient_articles') {
-        // Handled below by catch or already matched
+        // ...
       }
 
       subject = data.subject;
       let shell = job.businessProfile.activeTemplateSource === 'pasted'
         ? job.businessProfile.pastedTemplateHtml!
         : job.businessProfile.templateHtml!;
+
+      // Handle {{SUBJECT}} merge tag separately
+      shell = shell.replace(/{{SUBJECT}}/g, data.subject || '');
 
       const contentMap = job.businessProfile.activeTemplateSource === 'pasted'
         ? JSON.parse(job.businessProfile.pastedTemplateMap!)
