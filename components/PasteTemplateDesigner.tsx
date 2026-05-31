@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 
 interface Zone {
   id: string;
@@ -31,16 +31,52 @@ const SAMPLE_CONTENT = {
   topicLabel: "This week in technology",
 };
 
-export default function PasteTemplateDesigner({ initialHtml, initialMap }: { initialHtml?: string, initialMap?: string }) {
+interface Props {
+  initialHtml?: string;
+  initialMap?: string;
+  onSave: (data: { html: string; contentMap: any }) => void;
+}
+
+export default function PasteTemplateDesigner({ initialHtml, initialMap, onSave }: Props) {
   const [html, setHtml] = useState(initialHtml || '');
   const [zones, setZones] = useState<Zone[]>([]);
-  const [map, setMap] = useState<ContentMap>(initialMap ? JSON.parse(initialMap) : {
+  const [map, setMap] = useState<ContentMap>({
     headline: null, paragraph1: null, paragraph2: null, paragraph3: null,
     offerText: null, ctaLabel: null, ctaHref: null, topicLabel: null
   });
   const [view, setView] = useState<'desktop' | 'mobile'>('desktop');
   const [previewHtml, setPreviewHtml] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  useEffect(() => {
+    if (initialHtml) setHtml(initialHtml);
+    if (initialMap) {
+       try {
+         setMap(JSON.parse(initialMap));
+       } catch (e) {}
+    }
+  }, [initialHtml, initialMap]);
+
+  const generateUniqueSelector = (element: HTMLElement): string => {
+    let el: HTMLElement | null = element;
+    if (el.id) return "#" + el.id;
+    let path = [];
+    while (el && el.nodeType === Node.ELEMENT_NODE) {
+      let selector = el.nodeName.toLowerCase();
+      let index = 1;
+      let sibling = el.previousSibling;
+      while (sibling) {
+        if (sibling.nodeType === Node.ELEMENT_NODE && sibling.nodeName === el.nodeName) {
+          index++;
+        }
+        sibling = sibling.previousSibling;
+      }
+      selector += ":nth-of-type(" + index + ")";
+      path.unshift(selector);
+      el = el.parentNode as HTMLElement;
+    }
+    return path.join(' > ');
+  };
 
   const extractZones = (htmlContent: string) => {
     const parser = new DOMParser();
@@ -58,7 +94,7 @@ export default function PasteTemplateDesigner({ initialHtml, initialMap }: { ini
         const text = el.textContent?.trim();
         if (text && text.length > 2 && text.length < 500) {
           candidates.push({
-            id: `${sel}-${i}`,
+            id: sel + "-" + i,
             selector: generateUniqueSelector(el as HTMLElement),
             previewText: text.slice(0, 60),
             tagName: el.tagName.toLowerCase(),
@@ -68,50 +104,8 @@ export default function PasteTemplateDesigner({ initialHtml, initialMap }: { ini
       });
     });
 
-    // Deduplicate by selector
     const unique = Array.from(new Map(candidates.map(c => [c.selector, c])).values());
     setZones(unique);
-    autoMap(unique, doc);
-  };
-
-  const generateUniqueSelector = (el: HTMLElement): string => {
-    if (el.id) return `#${el.id}`;
-    let path = [];
-    while (el.nodeType === Node.ELEMENT_NODE) {
-      let selector = el.nodeName.toLowerCase();
-      let index = 1;
-      let sibling = el.previousSibling;
-      while (sibling) {
-        if (sibling.nodeType === Node.ELEMENT_NODE && sibling.nodeName === el.nodeName) {
-          index++;
-        }
-        sibling = sibling.previousSibling;
-      }
-      selector += `:nth-of-type(${index})`;
-      path.unshift(selector);
-      el = el.parentNode as HTMLElement;
-    }
-    return path.join(' > ');
-  };
-
-  const autoMap = (extractedZones: Zone[], doc: Document) => {
-    const newMap: ContentMap = { ...map };
-
-    const h1 = extractedZones.find(z => z.tagName === 'h1' || z.tagName === 'h2');
-    if (h1) newMap.headline = h1.selector;
-
-    const longPs = extractedZones.filter(z => z.tagName === 'p' && z.previewText.length > 50);
-    if (longPs[0]) newMap.paragraph1 = longPs[0].selector;
-    if (longPs[1]) newMap.paragraph2 = longPs[1].selector;
-    if (longPs[2]) newMap.paragraph3 = longPs[2].selector;
-
-    const cta = extractedZones.find(z => z.isLink && /click|learn|get|start|book|buy|read/i.test(z.previewText));
-    if (cta) {
-       newMap.ctaLabel = cta.selector;
-       newMap.ctaHref = cta.selector;
-    }
-
-    setMap(newMap);
   };
 
   const generatePreview = () => {
@@ -141,13 +135,8 @@ export default function PasteTemplateDesigner({ initialHtml, initialMap }: { ini
 
   const handleSave = async () => {
     setIsSaving(true);
-    await fetch('/api/business-profile/pasted-template', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ html, contentMap: map, source: 'pasted' })
-    });
+    await onSave({ html, contentMap: map });
     setIsSaving(false);
-    alert('Template saved!');
   };
 
   return (
@@ -175,11 +164,11 @@ export default function PasteTemplateDesigner({ initialHtml, initialMap }: { ini
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-xl border border-gray-100">
               {(Object.keys(map) as Array<keyof ContentMap>).map((key) => (
                 <div key={key}>
-                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{key.replace(/([A-Z])/g, ' ')}</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">{key.replace(/([A-Z])/g, ' $1')}</label>
                   <select
                     value={map[key] || ''}
                     onChange={(e) => setMap({ ...map, [key]: e.target.value || null })}
-                    className="w-full border rounded-md p-2 text-sm bg-white"
+                    className="w-full border rounded-md p-2 text-sm bg-white text-gray-900"
                   >
                     <option value="">-- Not used --</option>
                     {zones.map(z => (
@@ -203,8 +192,8 @@ export default function PasteTemplateDesigner({ initialHtml, initialMap }: { ini
             {previewHtml && (
               <div className="border-t pt-8">
                  <div className="flex justify-center space-x-2 mb-4">
-                    <button onClick={() => setView('desktop')} className={`px-3 py-1 rounded ${view === 'desktop' ? 'bg-gray-800 text-white' : 'bg-gray-200'}`}>Desktop</button>
-                    <button onClick={() => setView('mobile')} className={`px-3 py-1 rounded ${view === 'mobile' ? 'bg-gray-800 text-white' : 'bg-gray-200'}`}>Mobile</button>
+                    <button onClick={() => setView('desktop')} className={"px-3 py-1 rounded " + (view === 'desktop' ? 'bg-gray-800 text-white' : 'bg-gray-200')}>Desktop</button>
+                    <button onClick={() => setView('mobile')} className={"px-3 py-1 rounded " + (view === 'mobile' ? 'bg-gray-800 text-white' : 'bg-gray-200')}>Mobile</button>
                  </div>
                  <div className="flex justify-center">
                     <iframe

@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import TemplateEditor from '@/components/TemplateEditor';
 import PasteTemplateDesigner from '@/components/PasteTemplateDesigner';
 import AIWebsiteGenerator from '@/components/AIWebsiteGenerator';
-import TemplateSlotPicker from '@/components/TemplateSlotPicker';
+import MyTemplates from '@/components/MyTemplates';
 import Link from 'next/link';
 
 export default function DesignPage() {
@@ -12,21 +12,25 @@ export default function DesignPage() {
   const [slots, setSlots] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'visual' | 'paste'>('visual');
-  const [activeSlotId, setActiveSlotId] = useState<string | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<any>(null);
 
   const fetchData = async () => {
     const [profileRes, slotsRes] = await Promise.all([
-      fetch('/api/business-profile/template'),
-      fetch('/api/templates/slots')
+      fetch('/api/business-profile'),
+      fetch('/api/templates')
     ]);
     const profileData = await profileRes.json();
     const slotsData = await slotsRes.json();
 
     setProfile(profileData);
-    setSlots(slotsData);
-    if (profileData.activeTemplateSource === 'pasted') {
-      setActiveTab('paste');
+
+    const fullSlots = [];
+    for (let i = 1; i <= 5; i++) {
+      const existing = slotsData.find((s: any) => s.slotNumber === i);
+      if (existing) fullSlots.push(existing);
+      else fullSlots.push({ slotNumber: i, isEmpty: true, name: 'Empty Slot ' + i });
     }
+    setSlots(fullSlots);
     setLoading(false);
   };
 
@@ -35,40 +39,45 @@ export default function DesignPage() {
   }, []);
 
   const handleSaveVisual = async (data: { html: string; design: any }) => {
-    const res = await fetch('/api/business-profile/template', {
+    const targetSlot = editingTemplate?.slotNumber || slots.find(s => s.isEmpty)?.slotNumber || 1;
+
+    const res = await fetch('/api/templates', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         templateHtml: data.html,
         templateJson: JSON.stringify(data.design),
-        source: 'unlayer'
+        source: 'UNLAYER',
+        slotNumber: targetSlot,
+        name: editingTemplate?.name || 'Visual Template'
       })
     });
+
     if (res.ok) {
-       alert('Visual design saved and set as active!');
+       alert('Template saved!');
+       setEditingTemplate(null);
        fetchData();
     }
   };
 
-  const handleSlotSelect = async (id: string) => {
-    setActiveSlotId(id);
-    const res = await fetch('/api/templates/slots', {
+  const handleSavePasted = async (data: { html: string; contentMap: any }) => {
+    const targetSlot = editingTemplate?.slotNumber || slots.find(s => s.isEmpty)?.slotNumber || 1;
+
+    const res = await fetch('/api/templates', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ slotId: id })
+      body: JSON.stringify({
+        templateHtml: data.html,
+        contentMap: JSON.stringify(data.contentMap),
+        source: 'PASTED',
+        slotNumber: targetSlot,
+        name: editingTemplate?.name || 'Pasted Template'
+      })
     });
-    if (res.ok) {
-       alert('Template activated!');
-       fetchData();
-    }
-  };
 
-  const handleSlotDelete = async (id: string) => {
-    if (!confirm('Delete this template?')) return;
-    const res = await fetch(`/api/templates/slots/${id}`, {
-      method: 'DELETE'
-    });
     if (res.ok) {
+       alert('Template saved!');
+       setEditingTemplate(null);
        fetchData();
     }
   };
@@ -83,57 +92,64 @@ export default function DesignPage() {
             &larr; Back to Settings
           </Link>
           <h1 className="text-lg font-bold text-gray-900">Newsletter Template Designer</h1>
-          <div className="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase tracking-tighter">
-            Active: {profile?.activeTemplateSource || 'Generated'}
+          <div className="text-xs font-bold text-teal-600 bg-teal-50 px-3 py-1 rounded-full uppercase tracking-tighter">
+            50% More Engagement with Custom Templates
           </div>
         </div>
 
         <div className="flex space-x-8">
            <button
-             onClick={() => setActiveTab('visual')}
-             className={`pb-3 text-sm font-medium transition-colors ${activeTab === 'visual' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+             onClick={() => { setActiveTab('visual'); setEditingTemplate(null); }}
+             className={"pb-3 text-sm font-medium transition-colors " + (activeTab === 'visual' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700')}
            >
              Visual Designer
            </button>
            <button
-             onClick={() => setActiveTab('paste')}
-             className={`pb-3 text-sm font-medium transition-colors ${activeTab === 'paste' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700'}`}
+             onClick={() => { setActiveTab('paste'); setEditingTemplate(null); }}
+             className={"pb-3 text-sm font-medium transition-colors " + (activeTab === 'paste' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700')}
            >
-             Paste Template
+             Paste HTML
            </button>
         </div>
       </div>
 
       <div className="max-w-7xl mx-auto w-full px-6 py-8 space-y-12">
-        <AIWebsiteGenerator onSuccess={(id) => {
-           fetchData();
-           setTimeout(() => {
-             document.getElementById(`slot-${id}`)?.scrollIntoView({ behavior: 'smooth' });
-           }, 500);
-        }} />
+        <AIWebsiteGenerator onSuccess={() => fetchData()} />
+
+        <MyTemplates
+          slots={slots}
+          onEdit={(slot) => {
+            setEditingTemplate(slot);
+            setActiveTab(slot.source === 'PASTED' || slot.source === 'AI_GENERATED' ? 'paste' : 'visual');
+            window.scrollTo({ top: 400, behavior: 'smooth' });
+          }}
+          onRefresh={fetchData}
+        />
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div className="p-4 border-b bg-gray-50 flex justify-between items-center">
+             <h2 className="text-sm font-bold text-gray-700">
+               {editingTemplate ? ("Editing: " + editingTemplate.name) : "Create New Template"}
+             </h2>
+             {editingTemplate && (
+               <button onClick={() => setEditingTemplate(null)} className="text-xs text-red-600 font-bold uppercase">Cancel Edit</button>
+             )}
+          </div>
           <div className="h-[700px] relative">
             {activeTab === 'visual' ? (
               <TemplateEditor
-                initialDesign={profile?.templateJson}
+                initialDesign={editingTemplate?.templateJson}
                 onSave={handleSaveVisual}
               />
             ) : (
               <PasteTemplateDesigner
-                initialHtml={profile?.pastedTemplateHtml}
-                initialMap={profile?.pastedTemplateMap}
+                initialHtml={editingTemplate?.templateHtml}
+                initialMap={editingTemplate?.contentMap}
+                onSave={handleSavePasted}
               />
             )}
           </div>
         </div>
-
-        <TemplateSlotPicker
-          slots={slots}
-          activeSlotId={activeSlotId}
-          onSelect={handleSlotSelect}
-          onDelete={handleSlotDelete}
-        />
       </div>
     </div>
   );

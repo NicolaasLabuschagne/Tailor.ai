@@ -91,41 +91,33 @@ model BusinessProfile {
   newsletterJobs   NewsletterJob[]
   subscribers      Subscriber[]
   newsSource       NewsSource?
-  template         NewsletterTemplate?
-  templateSlots        TemplateSlot[]
-  templateHtml         String?         @db.Text
-  templateJson         String?         @db.Text
-  pastedTemplateHtml   String?         @db.Text
-  pastedTemplateMap    String?         @db.Text
-  activeTemplateSource String          @default("generated")
+  templates        NewsletterTemplate[]
   includeTrending      Boolean         @default(true)
   createdAt            DateTime        @default(now())
   updatedAt        DateTime        @updatedAt
 }
 
-model TemplateSlot {
+model NewsletterTemplate {
   id                String          @id @default(cuid())
   businessProfileId String
   businessProfile   BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
-  name              String
-  html              String          @db.Text
-  json              String?         @db.Text
+  slotNumber        Int             @default(1)
+  name              String          @default("New Template")
   source            TemplateSource  @default(CUSTOM)
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-}
-
-model NewsletterTemplate {
-  id                String          @id @default(cuid())
-  businessProfileId String          @unique
-  businessProfile   BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  templateHtml      String?         @db.Text
+  templateJson      String?         @db.Text
+  contentMap        String?         @db.Text
+  thumbnail         String?         @db.Text
+  isActive          Boolean         @default(false)
   primaryColor      String          @default("#1a1a1a")
   secondaryColor    String          @default("#ffffff")
   fontHeader        String          @default("Arial, sans-serif")
   fontBody          String          @default("Georgia, Times New Roman, serif")
   logoUrl           String?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@unique([businessProfileId, slotNumber])
 }
 
 model NewsletterJob {
