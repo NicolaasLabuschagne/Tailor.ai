@@ -1,0 +1,218 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  CLIENT
+}
+
+enum TemplateSource {
+  AI_GENERATED
+  CUSTOM
+  UNLAYER
+  PASTED
+}
+
+enum NewsletterStatus {
+  PENDING
+  GENERATING
+  AWAITING_APPROVAL
+  REJECTED
+  APPROVED
+  PROCESSING
+  SENT
+  FAILED
+}
+
+enum SubscriberStatus {
+  ACTIVE
+  UNSUBSCRIBED
+}
+
+enum LogEvent {
+  GENERATED
+  APPROVED
+  SENT
+  FAILED
+  SKIPPED
+  PROCESSING
+  REGENERATED
+}
+
+enum BriefingStatus {
+  PENDING
+  GENERATING
+  READY
+  SENT
+  FAILED
+}
+
+enum BriefingEvent {
+  GENERATED
+  SENT
+  FAILED
+  SKIPPED
+  PROCESSING
+}
+
+model User {
+  id                          String           @id @default(cuid())
+  email                       String           @unique
+  password                    String?
+  name                        String?
+  role                        Role             @default(CLIENT)
+  businessProfile             BusinessProfile?
+  individualProfile           IndividualProfile?
+  approvalEmailNotifications Boolean          @default(true)
+  createdAt                   DateTime         @default(now())
+  updatedAt                   DateTime         @updatedAt
+}
+
+model BusinessProfile {
+  id               String          @id @default(cuid())
+  userId           String          @unique
+  user             User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  businessName     String
+  industry         String
+  targetAudience   String
+  brandVoice       String
+  tone             String
+  primaryCTA       String
+  productsServices String
+  currentOffers    String
+  websiteUrl       String
+  newsletterTagline String @default("Weekly update")
+  newsletterJobs   NewsletterJob[]
+  subscribers      Subscriber[]
+  newsSource       NewsSource?
+  templates        NewsletterTemplate[]
+  includeTrending      Boolean         @default(true)
+  createdAt            DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+}
+
+model NewsletterTemplate {
+  id                String          @id @default(cuid())
+  businessProfileId String
+  businessProfile   BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  slotNumber        Int             @default(1)
+  name              String          @default("New Template")
+  source            TemplateSource  @default(CUSTOM)
+  templateHtml      String?         @db.Text
+  templateJson      String?         @db.Text
+  contentMap        String?         @db.Text
+  thumbnail         String?         @db.Text
+  isActive          Boolean         @default(false)
+  primaryColor      String          @default("#1a1a1a")
+  secondaryColor    String          @default("#ffffff")
+  fontHeader        String          @default("Arial, sans-serif")
+  fontBody          String          @default("Georgia, Times New Roman, serif")
+  logoUrl           String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+
+  @@unique([businessProfileId, slotNumber])
+}
+
+model NewsletterJob {
+  id                String           @id @default(cuid())
+  businessProfileId String
+  businessProfile   BusinessProfile  @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  status            NewsletterStatus @default(PENDING)
+  scheduledAt       DateTime?
+  sentAt            DateTime?
+  subject           String?
+  htmlContent       String?
+  previewText       String?
+  editNote          String?
+  errorMessage      String?
+  sentCount         Int              @default(0)
+  totalRecipients   Int              @default(0)
+  logs              NewsletterJobLog[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model NewsletterJobLog {
+  id              String        @id @default(cuid())
+  newsletterJobId String
+  newsletterJob   NewsletterJob @relation(fields: [newsletterJobId], references: [id], onDelete: Cascade)
+  event           LogEvent
+  message         String?
+  createdAt       DateTime      @default(now())
+}
+
+model IndividualProfile {
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  displayName       String
+  deliveryFrequency String    @default("daily") // "daily" | "weekly"
+  deliveryTime      String    @default("07:00") // HH:MM UTC
+  topics            Topic[]
+  briefings         Briefing[]
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+model Topic {
+  id        String           @id @default(cuid())
+  profileId String
+  profile   IndividualProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  slug      String
+  label     String
+  keywords  String[]
+}
+
+model Briefing {
+  id          String            @id @default(cuid())
+  profileId   String
+  profile     IndividualProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  status      BriefingStatus    @default(PENDING)
+  htmlContent String?
+  subject     String?
+  scheduledAt DateTime
+  sentAt      DateTime?
+  logs        BriefingLog[]
+  createdAt   DateTime          @default(now())
+}
+
+model BriefingLog {
+  id         String        @id @default(cuid())
+  briefingId String
+  briefing   Briefing      @relation(fields: [briefingId], references: [id], onDelete: Cascade)
+  event      BriefingEvent
+  message    String?
+  createdAt  DateTime      @default(now())
+}
+
+model Subscriber {
+  id                String           @id @default(cuid())
+  businessProfileId String
+  businessProfile   BusinessProfile  @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  email             String
+  firstName         String?
+  tags              String[]
+  subscribedAt      DateTime         @default(now())
+  status            SubscriberStatus @default(ACTIVE)
+  updatedAt         DateTime         @updatedAt
+
+  @@unique([businessProfileId, email])
+}
+
+model NewsSource {
+  id                String          @id @default(cuid())
+  businessProfileId String          @unique
+  businessProfile   BusinessProfile @relation(fields: [businessProfileId], references: [id], onDelete: Cascade)
+  keywords          String[]
+  categories        String[]
+  excludedDomains   String[]
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+}

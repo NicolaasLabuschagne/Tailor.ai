@@ -1,0 +1,10 @@
+node_modules
+/public/uploads
+.next
+.env
+dist
+build
+*.log
+.DS_Store
+
+/generated/prisma
