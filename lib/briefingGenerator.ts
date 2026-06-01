@@ -10,9 +10,12 @@ export async function generateBriefing(profileId: string) {
 
   if (!profile) throw new Error('Profile not found');
 
+  // Determine lookback window
+  const hours = profile.deliveryFrequency === 'daily' ? 24 : 168;
+
   const allArticles = [];
   for (const topic of profile.topics) {
-    const articles = await fetchNewsForTopic(topic);
+    const articles = await fetchNewsForTopic(topic, hours);
     allArticles.push(...articles.map(a => ({ ...a, topic: topic.label })));
   }
 

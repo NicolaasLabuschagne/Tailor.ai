@@ -32,7 +32,7 @@ async function fetchNewsFromAllSources(keywords: string[], hours: number): Promi
       fetchRSS(GENERAL_US_FEEDS, keywords, hours),
       fetchNewsAPI({ keywords, language: "en", country: "us" }),
       fetchGuardian(keywords, hours),
-      fetchNYT(keywords),
+      fetchNYT(keywords, hours),
       fetchTrending(),
     ]);
 
@@ -46,15 +46,16 @@ async function fetchNewsFromAllSources(keywords: string[], hours: number): Promi
 }
 
 export async function fetchNewsForTopic(
-  topic: Topic
+  topic: Topic,
+  hours: number = 24
 ): Promise<RawArticle[]> {
   const feeds = TOPIC_FEEDS[topic.slug] ?? GENERAL_US_FEEDS;
 
   const [rssResults, guardianResults, nytResults] =
     await Promise.allSettled([
-      fetchRSS(feeds, topic.keywords),
-      fetchGuardian(topic.keywords),
-      fetchNYT(topic.keywords),
+      fetchRSS(feeds, topic.keywords, hours),
+      fetchGuardian(topic.keywords, hours),
+      fetchNYT(topic.keywords, hours),
     ]);
 
   const all = [

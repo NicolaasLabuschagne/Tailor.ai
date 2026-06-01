@@ -3,6 +3,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import prisma from '@/lib/prisma';
 import { AVAILABLE_TOPICS } from '@/lib/topics';
+import { generateBriefing } from '@/lib/briefingGenerator';
+import { Resend } from 'resend';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -17,7 +21,7 @@ export async function POST(req: NextRequest) {
 
     if (!user) return new NextResponse('User not found', { status: 404 });
 
-    // Calculate next scheduledAt
+    // Calculate next scheduledAt (for the SECOND briefing)
     let nextScheduledAt = new Date();
     const [hours, minutes] = deliveryTime.split(':').map(Number);
     nextScheduledAt.setUTCHours(hours, minutes, 0, 0);
@@ -35,6 +39,7 @@ export async function POST(req: NextRequest) {
         nextScheduledAt.setUTCDate(nextScheduledAt.getUTCDate() + daysUntilMonday);
     }
 
+    // Create profile and topics first
     const profile = await prisma.individualProfile.create({
       data: {
         userId: user.id,
@@ -50,13 +55,56 @@ export async function POST(req: NextRequest) {
               keywords: topic?.keywords || [],
             };
           })
-        },
-        briefings: {
-          create: {
-            status: 'PENDING',
-            scheduledAt: nextScheduledAt,
+        }
+      }
+    });
+
+    // GENERATE AND SEND INITIAL BRIEFING INSTANTLY
+    try {
+      const briefingResult = await generateBriefing(profile.id);
+
+      await resend.emails.send({
+        from: 'Tailor <briefings@resend.dev>',
+        to: session.user.email,
+        subject: briefingResult.subject,
+        html: briefingResult.htmlContent,
+      });
+
+      // Record it as SENT
+      await prisma.briefing.create({
+        data: {
+          profileId: profile.id,
+          status: 'SENT',
+          scheduledAt: new Date(),
+          sentAt: new Date(),
+          subject: briefingResult.subject,
+          htmlContent: briefingResult.htmlContent,
+          logs: {
+            create: { event: 'GENERATED', message: 'Initial catch-up briefing generated' }
           }
         }
+      });
+
+      await prisma.briefingLog.create({
+        data: {
+          briefingId: (await prisma.briefing.findFirst({ where: { profileId: profile.id }, orderBy: { createdAt: 'desc' } }))?.id || '',
+          event: 'SENT',
+          message: 'Initial briefing delivered'
+        }
+      });
+
+    } catch (genError: any) {
+      console.error('Failed to generate initial briefing:', genError);
+      // We don't fail the whole onboarding if the initial briefing fails,
+      // but we should probably record the failure.
+    }
+
+    // Schedule the NEXT one
+    await prisma.briefing.create({
+      data: {
+        profileId: profile.id,
+        status: 'PENDING',
+        scheduledAt: nextScheduledAt,
       }
     });
 

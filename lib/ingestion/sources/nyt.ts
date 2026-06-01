@@ -1,15 +1,15 @@
 import axios from 'axios';
 import { RawArticle } from '../types';
 
-export async function fetchNYT(keywords: string[]): Promise<RawArticle[]> {
+export async function fetchNYT(keywords: string[], hoursCutoff: number = 24): Promise<RawArticle[]> {
   try {
-    const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+    const cutoffDate = new Date(Date.now() - hoursCutoff * 60 * 60 * 1000).toISOString().split('T')[0];
     const q = keywords.join(' ');
 
     const response = await axios.get('https://api.nytimes.com/svc/search/v2/articlesearch.json', {
       params: {
         'api-key': process.env.NYT_API_KEY,
-        'fq': `document_type:("article") AND pub_date:[${yesterday}T00:00:00Z TO *]`,
+        'fq': `document_type:("article") AND pub_date:[${cutoffDate}T00:00:00Z TO *]`,
         'q': q,
         'sort': 'newest',
         'fl': 'headline,abstract,web_url,pub_date,source'
