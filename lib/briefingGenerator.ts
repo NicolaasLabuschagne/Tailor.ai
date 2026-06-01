@@ -14,9 +14,20 @@ export async function generateBriefing(profileId: string) {
   const hours = profile.deliveryFrequency === 'daily' ? 24 : 168;
 
   const allArticles = [];
+  const seenUrls = new Set<string>();
+
   for (const topic of profile.topics) {
     const articles = await fetchNewsForTopic(topic, hours);
-    allArticles.push(...articles.map(a => ({ ...a, topic: topic.label })));
+    for (const article of articles) {
+      if (!seenUrls.has(article.url)) {
+        seenUrls.add(article.url);
+        allArticles.push({ ...article, topic: topic.label });
+      }
+    }
+  }
+
+  if (allArticles.length === 0) {
+    throw new Error('No news articles found for briefing topics');
   }
 
   const systemPrompt = `You are an elite executive assistant. Your job is to create a concise, intelligent personal news briefing.
@@ -36,9 +47,12 @@ Please write a briefing that includes:
 1. A smart, personalized subject line (return as <!-- SUBJECT: your subject here -->)
   2. A brief executive summary (2-3 sentences) of the overall landscape. Wrap in <p style="margin-bottom: 16px;">.
   3. Sectioned news updates by topic.
+     - ONLY include a topic section if there are articles for that topic.
+     - Each article should only appear ONCE in the entire briefing.
      - Use <h2 style="color: #4a5568; font-size: 18px; font-weight: 600; margin-top: 32px; margin-bottom: 16px; text-transform: uppercase; letter-spacing: 0.05em;">Topic Name</h2>
      - For each article: <div style="margin-bottom: 24px;"><span style="font-weight: 600; color: #2d3748; display: block; margin-bottom: 4px;">Headline</span><span style="color: #718096; font-size: 14px; font-style: italic;">Why it matters: impact summary.</span></div>
   4. A "Deep Dive" recommendation:
+     - Choose the single most important story from the list above.
      - Use <div style="background-color: #ebf8ff; border-left: 4px solid #3182ce; padding: 20px; margin-top: 40px;"><h3>Deep Dive: Headline</h3><p>Detailed summary.</p></div>
 
   Format all HTML with INLINE styles only. Do not use <style> blocks.`;
