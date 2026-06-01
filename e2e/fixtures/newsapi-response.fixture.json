@@ -1,0 +1,16 @@
+{
+  "status": "ok",
+  "totalResults": 1,
+  "articles": [
+    {
+      "source": { "id": "techcrunch", "name": "TechCrunch" },
+      "author": "John Doe",
+      "title": "The Future of AI",
+      "description": "AI is changing the world as we know it.",
+      "url": "https://techcrunch.com/future-of-ai",
+      "urlToImage": "https://techcrunch.com/image.jpg",
+      "publishedAt": "2024-05-14T12:00:00Z",
+      "content": "Full content here..."
+    }
+  ]
+}

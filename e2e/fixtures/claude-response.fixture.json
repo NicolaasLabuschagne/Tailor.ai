@@ -1,0 +1,13 @@
+{
+  "id": "msg_01",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    {
+      "type": "text",
+      "text": "<!-- SUBJECT: AI Revolution --> <!-- PREVIEW: How AI is shaping the future --> <html><body><h1>AI Revolution</h1></body></html>"
+    }
+  ],
+  "model": "claude-3-5-sonnet-20241022",
+  "stop_reason": "end_turn"
+}
