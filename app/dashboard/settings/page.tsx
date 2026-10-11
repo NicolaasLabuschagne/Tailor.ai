@@ -24,12 +24,12 @@ export default async function SettingsPage() {
       <h1 className="text-2xl font-semibold text-gray-900 mb-8">Settings</h1>
 
       <div className="space-y-8">
-        <div className="bg-indigo-600 rounded-lg p-6 text-white flex justify-between items-center shadow-lg">
+        <div className="bg-brand-600 rounded-lg p-6 text-white flex justify-between items-center shadow-lg">
            <div>
              <h2 className="text-xl font-bold">Newsletter Design</h2>
-             <p className="text-indigo-100 text-sm">Customize colors, fonts, and logos for your automated newsletters.</p>
+             <p className="text-brand-100 text-sm">Customize colors, fonts, and logos for your automated newsletters.</p>
            </div>
-           <Link href="/dashboard/design" className="bg-white text-indigo-600 px-4 py-2 rounded-md font-medium hover:bg-indigo-50">
+           <Link href="/dashboard/design" className="bg-white text-brand-600 px-4 py-2 rounded-md font-medium hover:bg-brand-50">
              Customize Design &rarr;
            </Link>
         </div>

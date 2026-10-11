@@ -54,7 +54,7 @@ export default function AIWebsiteGenerator({ onSuccess }: { onSuccess: (slotId: 
   };
 
   return (
-    <div className="bg-white border rounded-xl p-6 shadow-sm border-indigo-100 bg-gradient-to-br from-indigo-50/30 to-white">
+    <div className="bg-white border rounded-xl p-6 shadow-sm border-brand-100 bg-gradient-to-br from-brand-50/30 to-white">
       <div className="flex items-center space-x-2 mb-4">
         <span className="text-xl">✨</span>
         <h2 className="text-lg font-bold text-gray-900">Generate from your website</h2>
@@ -67,21 +67,21 @@ export default function AIWebsiteGenerator({ onSuccess }: { onSuccess: (slotId: 
           value={url}
           onChange={(e) => setUrl(e.target.value)}
           placeholder="https://yourwebsite.com"
-          className="flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+          className="flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm focus:ring-2 focus:ring-brand-500 outline-none"
           disabled={loading}
         />
         <button
           onClick={handleGenerate}
           disabled={loading || !url}
-          className="bg-indigo-600 text-white px-6 py-2 rounded-md text-sm font-bold hover:bg-indigo-700 disabled:opacity-50 transition-all shadow-md active:scale-95"
+          className="bg-brand-600 text-white px-6 py-2 rounded-md text-sm font-bold hover:bg-brand-700 disabled:opacity-50 transition-all shadow-md active:scale-95"
         >
           {loading ? 'Generating...' : 'Generate'}
         </button>
       </div>
 
       {loading && (
-        <div className="mt-4 flex items-center space-x-3 text-indigo-600 animate-pulse">
-           <div className="w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin"></div>
+        <div className="mt-4 flex items-center space-x-3 text-brand-600 animate-pulse">
+           <div className="w-4 h-4 border-2 border-brand-600 border-t-transparent rounded-full animate-spin"></div>
            <span className="text-xs font-medium tracking-wide uppercase">{status}</span>
         </div>
       )}

@@ -176,7 +176,7 @@ export default function TemplateEditor({ initialDesign, onSave }: Props) {
       <div className="p-4 bg-white border-t flex justify-end">
          <button
            onClick={saveTemplate}
-           className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 font-medium"
+           className="bg-brand-600 text-white px-6 py-2 rounded-md hover:bg-brand-700 font-medium"
          >
            Save Template
          </button>

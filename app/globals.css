@@ -1,3 +1,18 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Brand palette (RGB channels) used by the `brand-*` Tailwind colors. Terracotta. */
+:root {
+  --brand-50: 253 245 242;
+  --brand-100: 251 231 224;
+  --brand-200: 246 205 191;
+  --brand-300: 238 167 145;
+  --brand-400: 226 123 94;
+  --brand-500: 208 93 62;
+  --brand-600: 181 72 45;
+  --brand-700: 150 58 37;
+  --brand-800: 123 50 34;
+  --brand-900: 102 44 32;
+  --brand-950: 55 20 14;
+}

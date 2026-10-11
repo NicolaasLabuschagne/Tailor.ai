@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useDialogs } from './ui/Dialogs';
 
 export default function OnboardingForm() {
+  const { notify } = useDialogs();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     businessName: '',
@@ -43,8 +45,8 @@ export default function OnboardingForm() {
     if (response.ok) {
       window.location.href = '/dashboard';
     } else {
-      const error = await response.json();
-      alert('Failed to save profile: ' + (error.error || 'Unknown error'));
+      const error = await response.json().catch(() => ({}));
+      notify({ tone: 'error', title: "Couldn't save your profile", message: error.error || 'Please check your details and try again.' });
     }
   };
 
@@ -71,7 +73,7 @@ export default function OnboardingForm() {
               <label className="block text-sm font-medium text-gray-700">Newsletter Tagline</label>
               <input type="text" name="newsletterTagline" value={formData.newsletterTagline} onChange={handleChange} placeholder="e.g. Weekly industry update, Monthly roundup" className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2" required />
             </div>
-            <button type="button" onClick={nextStep} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Next</button>
+            <button type="button" onClick={nextStep} className="bg-brand-600 text-white px-4 py-2 rounded-md hover:bg-brand-700">Next</button>
           </div>
         )}
 
@@ -91,7 +93,7 @@ export default function OnboardingForm() {
             </div>
             <div className="flex space-x-2">
               <button type="button" onClick={prevStep} className="bg-gray-300 px-4 py-2 rounded-md hover:bg-gray-400">Back</button>
-              <button type="button" onClick={nextStep} className="bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700">Next</button>
+              <button type="button" onClick={nextStep} className="bg-brand-600 text-white px-4 py-2 rounded-md hover:bg-brand-700">Next</button>
             </div>
           </div>
         )}

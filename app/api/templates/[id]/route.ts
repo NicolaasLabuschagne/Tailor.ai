@@ -19,9 +19,11 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
   if (!session?.user?.email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   try {
-    await prisma.newsletterTemplate.delete({
-      where: { id: params.id }
+    // Only delete templates that belong to the signed-in user's business
+    const { count } = await prisma.newsletterTemplate.deleteMany({
+      where: { id: params.id, businessProfile: { user: { email: session.user.email } } }
     });
+    if (count === 0) return NextResponse.json({ error: 'Template not found' }, { status: 404 });
     return NextResponse.json({ success: true });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });

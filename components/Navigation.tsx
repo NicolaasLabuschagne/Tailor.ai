@@ -27,7 +27,7 @@ export default async function Navigation() {
         <div className="flex justify-between h-16">
           <div className="flex">
             <div className="flex-shrink-0 flex items-center">
-              <Link href="/dashboard" className="text-xl font-bold text-indigo-600">
+              <Link href="/dashboard" className="text-xl font-bold text-brand-600">
                 Tailor
               </Link>
             </div>
@@ -43,6 +43,9 @@ export default async function Navigation() {
                   </Link>
                   <Link href="/dashboard/subscribers" className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">
                     Subscribers
+                  </Link>
+                  <Link href="/dashboard/layouts" className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">
+                    Layouts
                   </Link>
                   <Link href="/dashboard/design" className="text-gray-500 hover:text-gray-700 px-3 py-2 text-sm font-medium">
                     Design
@@ -75,7 +78,7 @@ export default async function Navigation() {
 
           <div className="flex items-center">
             <span className="text-sm text-gray-500 mr-4">{session.user.name || session.user.email}</span>
-            <Link href="/api/auth/signout" className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
+            <Link href="/api/auth/signout" className="inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-brand-600 hover:bg-brand-700">
               Sign out
             </Link>
           </div>

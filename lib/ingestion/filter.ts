@@ -38,7 +38,9 @@ const PAYWALL_PATTERNS = ["/subscribe", "/paywall", "/member-exclusive"];
 export function filterAndRank(
   articles: RawArticle[],
   keywords: string[],
-  maxResults: number = 5
+  maxResults: number = 5,
+  // strict: drop articles that match no keyword (trending stories are exempt)
+  strict: boolean = false
 ): RawArticle[] {
   const expandedKeywords = expandKeywords(keywords);
 
@@ -67,7 +69,11 @@ export function filterAndRank(
   }
 
   // Step 4 & 5: Scoring and Freshness
-  const scored = unique.map(a => {
+  const candidates = strict && expandedKeywords.length
+    ? unique.filter(a => a.isTrending || scoreArticle(a, expandedKeywords) > 0)
+    : unique;
+
+  const scored = candidates.map(a => {
     let score = scoreArticle(a, expandedKeywords);
 
     const ageHours = (Date.now() - a.publishedAt.getTime()) / (1000 * 60 * 60);

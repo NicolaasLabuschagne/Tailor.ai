@@ -1,3 +1,4 @@
+import { cleanGeneratedHtml } from '@/lib/templatePreview';
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -32,10 +33,12 @@ export async function POST(req: NextRequest) {
     }
 
     const html = await response.text();
-    const brandData = extractBrandData(html, finalUrl);
+      const brandData = await extractBrandData(html, finalUrl);
 
     if (brandData.topColors.length === 0) {
-       return NextResponse.json({ error: "We couldn't detect brand colors. Try the visual editor instead." }, { status: 400 });
+        return NextResponse.json({
+            error: "This website does not contain enough branding information to generate a template."
+        }, { status: 400 });
     }
 
     const systemPrompt = "You are an expert HTML email designer. Generate a complete, beautiful newsletter HTML template based on the brand data provided. Use ONLY inline CSS (no <style> blocks) so it works in all email clients. The template must include these exact merge tag placeholders: {{HEADLINE}}, {{PARAGRAPH_1}}, {{PARAGRAPH_2}}, {{PARAGRAPH_3}}, {{OFFER_TEXT}}, {{CTA_LABEL}}, {{CTA_URL}}, {{TOPIC_LABEL}}, {{UNSUBSCRIBE_LINK}}. Return ONLY the HTML. Nothing else.";
@@ -60,7 +63,7 @@ export async function POST(req: NextRequest) {
       "- Mobile-friendly (single column)\n" +
       "- All merge tags must be present exactly as shown";
 
-    const templateHtml = await generateContent(systemPrompt, userPrompt);
+    const templateHtml = cleanGeneratedHtml(await generateContent(systemPrompt, userPrompt));
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },

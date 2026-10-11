@@ -9,60 +9,119 @@ export interface BrandData {
   tone: string;
 }
 
-export function extractBrandData(html: string, url: string): BrandData {
-  const $ = load(html);
+export async function extractBrandData(html: string, url: string): Promise<BrandData> {
+    const $ = load(html);
 
-  // Colors: find most-used hex values
-  const colorRegex = /#([0-9A-Fa-f]{6})\b/g;
-  const allColors = Array.from(html.matchAll(colorRegex)).map(m => '#' + m[1]);
+    const colors = new Set<string>();
+    const fonts = new Set<string>();
+    let logoUrl: string | null = null;
 
-  const colorCounts = new Map<string, number>();
-  allColors.forEach(c => {
-    const normalized = c.toLowerCase();
-    if (!isNearWhite(normalized) && !isNearBlack(normalized)) {
-      colorCounts.set(normalized, (colorCounts.get(normalized) ?? 0) + 1);
+    // -----------------------------
+    // 1. Inline styles
+    // -----------------------------
+    $('[style]').each((_, el) => {
+        const style = $(el).attr('style') || '';
+        const matches = style.match(/#([0-9A-Fa-f]{3,6})\b/g);
+        matches?.forEach(c => colors.add(c.toLowerCase()));
+    });
+
+    // -----------------------------
+    // 2. Tailwind arbitrary colors
+    // -----------------------------
+    const tailwindMatches = html.match(/#([0-9A-Fa-f]{3,6})\b/g);
+    tailwindMatches?.forEach(c => colors.add(c.toLowerCase()));
+
+    // -----------------------------
+    // 3. External CSS files
+    // -----------------------------
+    const cssLinks = $('link[rel="stylesheet"]')
+        .map((_, el) => $(el).attr('href'))
+        .get()
+        .filter(Boolean);
+
+    for (const href of cssLinks) {
+        try {
+            const cssUrl = new URL(href!, url).toString();
+            const css = await fetch(cssUrl).then(r => r.text());
+
+            // Extract colors
+            const cssColors = css.match(/#([0-9A-Fa-f]{3,6})\b/g);
+            cssColors?.forEach(c => colors.add(c.toLowerCase()));
+
+            // Extract fonts
+            const fontMatches = css.match(/font-family:\s*['"]?([^'";\n,}]+)/gi);
+            fontMatches?.forEach(f => {
+                const cleaned = f.replace(/font-family:/i, '').trim();
+                if (!cleaned.toLowerCase().includes('icon') && !cleaned.toLowerCase().includes('awesome')) {
+                    fonts.add(cleaned);
+                }
+            });
+        } catch {
+            // Ignore CSS fetch failures
+        }
     }
-  });
 
-  const topColors = [...colorCounts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 3)
-    .map(([color]) => color);
+    // -----------------------------
+    // 4. Google Fonts
+    // -----------------------------
+    $('link[href*="fonts.googleapis.com"]').each((_, el) => {
+        const href = $(el).attr('href');
+        if (!href) return;
 
-  // Fonts
-  const fontRegex = /font-family:\s*['"]?([^'";\n,}]+)/g;
-  const fonts = Array.from(html.matchAll(fontRegex))
-    .map(m => m[1].trim())
-    .filter(f => !f.toLowerCase().includes('icon') && !f.toLowerCase().includes('awesome'))
-    .slice(0, 2);
+        const urlObj = new URL(href, url);
+        const family = urlObj.searchParams.get('family');
+        if (family) {
+            const fontName = family.split(':')[0].replace(/\+/g, ' ');
+            fonts.add(fontName);
+        }
+    });
 
-  // Logo
-  const logoImg = $('header img, .logo img, img[alt*="logo" i], img[class*="logo" i], a[href="/"] img').first().attr('src');
-  const logoUrl = logoImg ? resolveUrl(logoImg, url) : null;
+    // -----------------------------
+    // 5. Logo detection
+    // -----------------------------
+    const logoImg = $(
+        'header img, .logo img, img[alt*="logo" i], img[class*="logo" i], a[href="/"] img'
+    )
+        .first()
+        .attr('src');
 
-  // Business Name
-  const businessName = $('meta[property="og:site_name"]').attr('content')
-    || $('title').text().split(/[-|·]/)[0].trim()
-    || new URL(url).hostname;
+    logoUrl = logoImg ? resolveUrl(logoImg, url) : null;
 
-  // Tagline
-  const tagline = $('meta[name="description"]').attr('content')
-    || $('meta[property="og:description"]').attr('content')
-    || '';
+    // -----------------------------
+    // 6. Business name
+    // -----------------------------
+    const businessName =
+        $('meta[property="og:site_name"]').attr('content') ||
+        $('title').text().split(/[-|·]/)[0].trim() ||
+        new URL(url).hostname;
 
-  // Tone
-  const pageText = $('body').text().toLowerCase();
-  const tone = detectTone(pageText, html);
+    // -----------------------------
+    // 7. Tagline
+    // -----------------------------
+    const tagline =
+        $('meta[name="description"]').attr('content') ||
+        $('meta[property="og:description"]').attr('content') ||
+        '';
 
-  return {
-    topColors,
-    fonts,
-    logoUrl,
-    businessName,
-    tagline,
-    tone
-  };
+    // -----------------------------
+    // 8. Tone detection
+    // -----------------------------
+    const pageText = $('body').text().toLowerCase();
+    const tone = detectTone(pageText, html);
+
+    // -----------------------------
+    // 9. Return raw data (NO FALLBACK COLORS)
+    // -----------------------------
+    return {
+        topColors: Array.from(colors),
+        fonts: Array.from(fonts),
+        logoUrl,
+        businessName,
+        tagline,
+        tone
+    };
 }
+
 
 function isNearWhite(hex: string): boolean {
   const r = parseInt(hex.slice(1, 3), 16);

@@ -166,7 +166,7 @@ export default function SettingsForm({ initialProfile }: Props) {
                    type="checkbox"
                    checked={profile.includeTrending}
                    onChange={handleChange}
-                   className="focus:ring-indigo-500 h-4 w-4 text-indigo-600 border-gray-300 rounded"
+                   className="focus:ring-brand-500 h-4 w-4 text-brand-600 border-gray-300 rounded"
                  />
               </div>
               <div className="ml-3 text-sm">
@@ -181,7 +181,7 @@ export default function SettingsForm({ initialProfile }: Props) {
         <button
           type="submit"
           disabled={isSaving}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-600 hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50"
         >
           {isSaving ? 'Saving...' : 'Save Changes'}
         </button>

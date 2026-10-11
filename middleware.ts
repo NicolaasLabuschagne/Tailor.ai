@@ -14,6 +14,7 @@ export const config = {
     "/api/subscribers/:path*",
     "/api/business-profile/:path*",
     "/api/individual-profile/:path*",
-    "/api/briefings/:path*"
+    "/api/briefings/:path*",
+    "/api/layouts/:path*"
   ]
 }

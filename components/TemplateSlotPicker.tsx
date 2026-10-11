@@ -26,10 +26,10 @@ export default function TemplateSlotPicker({ slots, activeSlotId, onSelect, onDe
             key={slot.id}
             id={`slot-${slot.id}`}
             onClick={() => onSelect(slot.id)}
-            className={`relative p-4 rounded-lg border transition-all cursor-pointer group ${activeSlotId === slot.id ? 'border-indigo-600 bg-indigo-50 shadow-md ring-1 ring-indigo-600' : 'border-gray-200 bg-white hover:border-indigo-300 shadow-sm'}`}
+            className={`relative p-4 rounded-lg border transition-all cursor-pointer group ${activeSlotId === slot.id ? 'border-brand-600 bg-brand-50 shadow-md ring-1 ring-brand-600' : 'border-gray-200 bg-white hover:border-brand-300 shadow-sm'}`}
           >
             <div className="flex justify-between items-start mb-2">
-              <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${slot.source === 'AI_GENERATED' ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-700'}`}>
+              <span className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${slot.source === 'AI_GENERATED' ? 'bg-brand-100 text-brand-700' : 'bg-gray-100 text-gray-700'}`}>
                 {slot.source.replace('_', ' ')}
               </span>
               <button

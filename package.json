@@ -41,6 +41,7 @@
     "lucide-react": "^1.16.0",
     "next": "^14.2.35",
     "next-auth": "^4.24.14",
+    "nodemailer": "^7.0.13",
     "node-fetch": "^3.3.2",
     "postcss": "^8.4.38",
     "prisma": "^6.2.1",

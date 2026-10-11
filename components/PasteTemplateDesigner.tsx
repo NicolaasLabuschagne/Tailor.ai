@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import EmailFrame from './EmailFrame';
+import { fillTemplatePreview } from '@/lib/templatePreview';
 
 interface Zone {
   id: string;
@@ -21,16 +23,6 @@ interface ContentMap {
   topicLabel: string | null;
 }
 
-const SAMPLE_CONTENT = {
-  headline: "AI adoption among small businesses hits record high in 2026",
-  paragraph1: "A new report from Deloitte shows that 58% of small businesses in the US now use at least one AI tool in their daily operations, up from 23% just two years ago. The shift is being driven by accessible, affordable tools that require no technical expertise.",
-  paragraph2: "The businesses seeing the biggest gains are those using AI for customer communications — automated follow-ups, personalized emails, and instant responses to enquiries. Response time is down, conversion is up.",
-  paragraph3: "Analysts expect adoption to accelerate further as costs continue to fall and tools become easier to use. Businesses that haven't started yet are increasingly at a competitive disadvantage.",
-  offerText: "We're helping businesses in your industry get set up with the right tools. This month — free 30-minute strategy call, no obligation.",
-  ctaLabel: "Book your free call →",
-  topicLabel: "This week in technology",
-};
-
 interface Props {
   initialHtml?: string;
   initialMap?: string;
@@ -45,7 +37,6 @@ export default function PasteTemplateDesigner({ initialHtml, initialMap, onSave 
     offerText: null, ctaLabel: null, ctaHref: null, topicLabel: null
   });
   const [view, setView] = useState<'desktop' | 'mobile'>('desktop');
-  const [previewHtml, setPreviewHtml] = useState('');
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
@@ -108,30 +99,9 @@ export default function PasteTemplateDesigner({ initialHtml, initialMap, onSave 
     setZones(unique);
   };
 
-  const generatePreview = () => {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-
-    const inject = (selector: string | null, value: string, attr?: string) => {
-      if (!selector) return;
-      const el = doc.querySelector(selector);
-      if (el) {
-        if (attr) el.setAttribute(attr, value);
-        else el.textContent = value;
-      }
-    };
-
-    inject(map.headline, SAMPLE_CONTENT.headline);
-    inject(map.paragraph1, SAMPLE_CONTENT.paragraph1);
-    inject(map.paragraph2, SAMPLE_CONTENT.paragraph2);
-    inject(map.paragraph3, SAMPLE_CONTENT.paragraph3);
-    inject(map.offerText, SAMPLE_CONTENT.offerText);
-    inject(map.ctaLabel, SAMPLE_CONTENT.ctaLabel);
-    inject(map.ctaHref, '#', 'href');
-    inject(map.topicLabel, SAMPLE_CONTENT.topicLabel);
-
-    setPreviewHtml(doc.documentElement.outerHTML);
-  };
+  // Live preview: merge tags and mapped zones filled with sample copy
+  const livePreview = useMemo(() => fillTemplatePreview(html, { contentMap: map }), [html, map]);
+  const unfilledTags = /{{s*[A-Za-z0-9_]+s*}}/.test(html);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -143,11 +113,11 @@ export default function PasteTemplateDesigner({ initialHtml, initialMap, onSave 
     <div className="flex flex-col h-full bg-white overflow-y-auto">
       <div className="p-8 space-y-12 max-w-5xl mx-auto w-full">
         <section>
-          <h2 className="text-sm font-bold text-indigo-600 uppercase tracking-widest mb-4">Step 1: Paste your HTML template</h2>
+          <h2 className="text-sm font-bold text-brand-600 uppercase tracking-widest mb-4">Step 1: Paste your HTML template</h2>
           <textarea
             value={html}
             onChange={(e) => setHtml(e.target.value)}
-            className="w-full h-48 border rounded-lg p-4 font-mono text-xs focus:ring-2 focus:ring-indigo-500 outline-none"
+            className="w-full h-48 border rounded-lg p-4 font-mono text-xs focus:ring-2 focus:ring-brand-500 outline-none"
             placeholder="<html><body>...</body></html>"
           />
           <button
@@ -158,9 +128,40 @@ export default function PasteTemplateDesigner({ initialHtml, initialMap, onSave 
           </button>
         </section>
 
+        {html.trim() && (
+          <section>
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+              <div>
+                <h2 className="text-sm font-bold text-brand-600 uppercase tracking-widest">Live preview</h2>
+                <p className="text-xs text-gray-500 mt-1">
+                  {unfilledTags
+                    ? 'Merge tags like {{PARAGRAPH_1}} are shown with sample content. Real newsletters fill them automatically.'
+                    : 'Map your content zones below to see where newsletter content will go.'}
+                </p>
+              </div>
+              <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-0.5 text-xs">
+                {(['desktop', 'mobile'] as const).map((v) => (
+                  <button
+                    key={v}
+                    onClick={() => setView(v)}
+                    className={"rounded-md px-3 py-1 capitalize " + (view === v ? 'bg-white font-medium text-gray-900 shadow-sm' : 'text-gray-500')}
+                  >
+                    {v}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-center rounded-xl bg-gray-100 p-6">
+              <div className="bg-white shadow-lg transition-all duration-300" style={{ width: view === 'desktop' ? 640 : 375, maxWidth: '100%' }}>
+                <EmailFrame key={view} html={livePreview} title="Template preview" />
+              </div>
+            </div>
+          </section>
+        )}
+
         {zones.length > 0 && (
           <section className="animate-in fade-in slide-in-from-bottom-4">
-            <h2 className="text-sm font-bold text-indigo-600 uppercase tracking-widest mb-4">Step 2: Map your content zones</h2>
+            <h2 className="text-sm font-bold text-brand-600 uppercase tracking-widest mb-4">Step 2: Map your content zones</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-xl border border-gray-100">
               {(Object.keys(map) as Array<keyof ContentMap>).map((key) => (
                 <div key={key}>
@@ -181,29 +182,13 @@ export default function PasteTemplateDesigner({ initialHtml, initialMap, onSave 
           </section>
         )}
 
-        {zones.length > 0 && (
+        {html.trim() && (
           <section className="pb-20">
-            <h2 className="text-sm font-bold text-indigo-600 uppercase tracking-widest mb-4">Step 3: Preview & Save</h2>
+            <h2 className="text-sm font-bold text-brand-600 uppercase tracking-widest mb-4">Save</h2>
             <div className="flex space-x-4 mb-6">
-              <button onClick={generatePreview} className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 font-medium">Generate Preview</button>
               <button onClick={handleSave} disabled={isSaving} className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 font-medium">{isSaving ? 'Saving...' : 'Save & Use This Template'}</button>
             </div>
 
-            {previewHtml && (
-              <div className="border-t pt-8">
-                 <div className="flex justify-center space-x-2 mb-4">
-                    <button onClick={() => setView('desktop')} className={"px-3 py-1 rounded " + (view === 'desktop' ? 'bg-gray-800 text-white' : 'bg-gray-200')}>Desktop</button>
-                    <button onClick={() => setView('mobile')} className={"px-3 py-1 rounded " + (view === 'mobile' ? 'bg-gray-800 text-white' : 'bg-gray-200')}>Mobile</button>
-                 </div>
-                 <div className="flex justify-center">
-                    <iframe
-                      srcDoc={previewHtml}
-                      style={{ width: view === 'desktop' ? '600px' : '375px', height: '600px' }}
-                      className="border shadow-2xl rounded-lg"
-                    />
-                 </div>
-              </div>
-            )}
           </section>
         )}
       </div>

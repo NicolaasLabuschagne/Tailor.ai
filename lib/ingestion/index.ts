@@ -12,9 +12,9 @@ export async function fetchNewsForBusiness(
 ): Promise<RawArticle[]> {
   const keywords = profile.newsSource?.keywords || [];
 
-  // Try with 24h window first
+  // Try with 24h window first, keeping only on-topic articles
   const recent = await fetchNewsFromAllSources(keywords, 24);
-  const filteredRecent = filterAndRank(recent, keywords, 5);
+  const filteredRecent = filterAndRank(recent, keywords, 6, true);
 
   if (filteredRecent.length >= 3) {
     return filteredRecent;
@@ -23,7 +23,13 @@ export async function fetchNewsForBusiness(
   // Not enough fresh content — widen to 72h window
   console.log(`Only ${filteredRecent.length} articles in 24h — extending to 72h window for ${profile.businessName}`);
   const fallback = await fetchNewsFromAllSources(keywords, 72);
-  return filterAndRank(fallback, keywords, 5);
+  const filteredFallback = filterAndRank(fallback, keywords, 6, true);
+  if (filteredFallback.length >= 3) {
+    return filteredFallback;
+  }
+
+  // Still thin — accept loosely related articles rather than failing the issue
+  return filterAndRank(fallback, keywords, 6);
 }
 
 async function fetchNewsFromAllSources(keywords: string[], hours: number): Promise<RawArticle[]> {

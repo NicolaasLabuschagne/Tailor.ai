@@ -83,10 +83,10 @@ export default function IndividualOnboarding() {
         <div className="flex items-center justify-between">
           {[1, 2, 3].map((s) => (
             <div key={s} className="flex items-center">
-              <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step >= s ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
+              <div className={`h-8 w-8 rounded-full flex items-center justify-center ${step >= s ? 'bg-brand-600 text-white' : 'bg-gray-200 text-gray-500'}`}>
                 {s}
               </div>
-              {s < 3 && <div className={`w-20 h-1 ${step > s ? 'bg-indigo-600' : 'bg-gray-200'}`} />}
+              {s < 3 && <div className={`w-20 h-1 ${step > s ? 'bg-brand-600' : 'bg-gray-200'}`} />}
             </div>
           ))}
         </div>
@@ -130,7 +130,7 @@ export default function IndividualOnboarding() {
               className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
             />
           </div>
-          <button onClick={handleNext} className="w-full bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700">
+          <button onClick={handleNext} className="w-full bg-brand-600 text-white py-2 rounded-md hover:bg-brand-700">
             Next: Choose Topics
           </button>
         </div>
@@ -145,7 +145,7 @@ export default function IndividualOnboarding() {
               <div
                 key={topic.slug}
                 onClick={() => toggleTopic(topic.slug)}
-                className={`cursor-pointer p-4 border rounded-lg transition-colors ${formData.selectedTopics.includes(topic.slug) ? 'border-indigo-600 bg-indigo-50' : 'border-gray-200 hover:border-indigo-300'}`}
+                className={`cursor-pointer p-4 border rounded-lg transition-colors ${formData.selectedTopics.includes(topic.slug) ? 'border-brand-600 bg-brand-50' : 'border-gray-200 hover:border-brand-300'}`}
               >
                 <div className="font-medium">{topic.label}</div>
               </div>
@@ -153,7 +153,7 @@ export default function IndividualOnboarding() {
           </div>
           <div className="flex space-x-4">
             <button onClick={() => setStep(1)} className="flex-1 border border-gray-300 py-2 rounded-md hover:bg-gray-50">Back</button>
-            <button onClick={handleNext} className="flex-1 bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700">Next: Review</button>
+            <button onClick={handleNext} className="flex-1 bg-brand-600 text-white py-2 rounded-md hover:bg-brand-700">Next: Review</button>
           </div>
         </div>
       )}
@@ -189,7 +189,7 @@ export default function IndividualOnboarding() {
             <button
               onClick={handleSubmit}
               disabled={loading}
-              className="flex-1 bg-indigo-600 text-white py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50"
+              className="flex-1 bg-brand-600 text-white py-2 rounded-md hover:bg-brand-700 disabled:opacity-50"
             >
               {loading ? 'Setting up...' : 'Generate my first briefing'}
             </button>

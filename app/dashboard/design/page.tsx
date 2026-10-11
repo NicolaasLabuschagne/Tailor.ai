@@ -1,18 +1,22 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import TemplateEditor from '@/components/TemplateEditor';
 import PasteTemplateDesigner from '@/components/PasteTemplateDesigner';
 import AIWebsiteGenerator from '@/components/AIWebsiteGenerator';
 import MyTemplates from '@/components/MyTemplates';
+import { useDialogs } from '@/components/ui/Dialogs';
 import Link from 'next/link';
 
 export default function DesignPage() {
+  const { notify } = useDialogs();
   const [profile, setProfile] = useState<any>(null);
   const [slots, setSlots] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'visual' | 'paste'>('visual');
   const [editingTemplate, setEditingTemplate] = useState<any>(null);
+  const [autoPreviewId, setAutoPreviewId] = useState<string | null>(null);
+  const clearAutoPreview = useCallback(() => setAutoPreviewId(null), []);
 
   const fetchData = async () => {
     const [profileRes, slotsRes] = await Promise.all([
@@ -54,9 +58,12 @@ export default function DesignPage() {
     });
 
     if (res.ok) {
-       alert('Template saved!');
+       notify({ tone: 'success', title: 'Template saved', message: 'Activate it in My Templates to use it for new newsletters.' });
        setEditingTemplate(null);
        fetchData();
+    } else {
+       const err = await res.json().catch(() => ({}));
+       notify({ tone: 'error', title: "Couldn't save template", message: err.error || 'Please try again.' });
     }
   };
 
@@ -76,9 +83,12 @@ export default function DesignPage() {
     });
 
     if (res.ok) {
-       alert('Template saved!');
+       notify({ tone: 'success', title: 'Template saved', message: 'Activate it in My Templates to use it for new newsletters.' });
        setEditingTemplate(null);
        fetchData();
+    } else {
+       const err = await res.json().catch(() => ({}));
+       notify({ tone: 'error', title: "Couldn't save template", message: err.error || 'Please try again.' });
     }
   };
 
@@ -100,13 +110,13 @@ export default function DesignPage() {
         <div className="flex space-x-8">
            <button
              onClick={() => { setActiveTab('visual'); setEditingTemplate(null); }}
-             className={"pb-3 text-sm font-medium transition-colors " + (activeTab === 'visual' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700')}
+             className={"pb-3 text-sm font-medium transition-colors " + (activeTab === 'visual' ? 'border-b-2 border-brand-600 text-brand-600' : 'text-gray-500 hover:text-gray-700')}
            >
              Visual Designer
            </button>
            <button
              onClick={() => { setActiveTab('paste'); setEditingTemplate(null); }}
-             className={"pb-3 text-sm font-medium transition-colors " + (activeTab === 'paste' ? 'border-b-2 border-indigo-600 text-indigo-600' : 'text-gray-500 hover:text-gray-700')}
+             className={"pb-3 text-sm font-medium transition-colors " + (activeTab === 'paste' ? 'border-b-2 border-brand-600 text-brand-600' : 'text-gray-500 hover:text-gray-700')}
            >
              Paste HTML
            </button>
@@ -114,7 +124,13 @@ export default function DesignPage() {
       </div>
 
       <div className="max-w-7xl mx-auto w-full px-6 py-8 space-y-12">
-        <AIWebsiteGenerator onSuccess={() => fetchData()} />
+        <AIWebsiteGenerator
+          onSuccess={(slotId) => {
+            notify({ tone: 'success', title: 'Template generated', message: 'Here is a preview with sample content.' });
+            setAutoPreviewId(slotId);
+            fetchData();
+          }}
+        />
 
         <MyTemplates
           slots={slots}
@@ -124,6 +140,9 @@ export default function DesignPage() {
             window.scrollTo({ top: 400, behavior: 'smooth' });
           }}
           onRefresh={fetchData}
+          businessName={profile?.businessName}
+          autoPreviewId={autoPreviewId}
+          onAutoPreviewShown={clearAutoPreview}
         />
 
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">

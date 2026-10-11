@@ -46,7 +46,7 @@ export default function AnalyticsPage() {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Line type="monotone" dataKey="sent" stroke="#4f46e5" strokeWidth={2} />
+                <Line type="monotone" dataKey="sent" stroke="rgb(var(--brand-600))" strokeWidth={2} />
                 <Line type="monotone" dataKey="opens" stroke="#10b981" strokeWidth={2} />
               </LineChart>
             </ResponsiveContainer>
@@ -62,7 +62,7 @@ export default function AnalyticsPage() {
                 <XAxis dataKey="name" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="sent" fill="#4f46e5" />
+                <Bar dataKey="sent" fill="rgb(var(--brand-600))" />
               </BarChart>
             </ResponsiveContainer>
           </div>

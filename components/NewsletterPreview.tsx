@@ -1,6 +1,9 @@
 'use client';
 
 import React from 'react';
+import EmailFrame from './EmailFrame';
+import LayoutPickerModal from './LayoutPickerModal';
+import { useDialogs } from './ui/Dialogs';
 
 interface NewsletterJob {
   id: string;
@@ -9,23 +12,29 @@ interface NewsletterJob {
   htmlContent: string | null;
   previewText: string | null;
   editNote: string | null;
+  contentJson?: string | null;
+  layoutId?: string | null;
 }
 
 interface NewsletterPreviewProps {
   job: NewsletterJob;
   onDeleted?: () => void;
   onStatusUpdate?: (status: string) => void;
+  onJobUpdate?: (job: any) => void;
 }
 
-export default function NewsletterPreview({ job, onDeleted, onStatusUpdate }: NewsletterPreviewProps) {
+export default function NewsletterPreview({ job, onDeleted, onStatusUpdate, onJobUpdate }: NewsletterPreviewProps) {
+  const { confirm, notify } = useDialogs();
   const [view, setView] = React.useState<'desktop' | 'mobile'>('desktop');
   const [editNote, setEditNote] = React.useState('');
   const [isRegenerating, setIsRegenerating] = React.useState(false);
   const [scheduledAt, setScheduledAt] = React.useState('');
+  const [pickerOpen, setPickerOpen] = React.useState(false);
+  const canChangeLayout = !!job.contentJson && !['SENT', 'PROCESSING'].includes(job.status);
 
   const handleApprove = async () => {
     if (!scheduledAt) {
-       alert('Please select a schedule time.');
+       notify({ tone: 'error', title: 'Pick a send time', message: 'Choose when this newsletter should go out, then approve it.' });
        return;
     }
     const res = await fetch(`/api/newsletters/approve`, {
@@ -34,11 +43,16 @@ export default function NewsletterPreview({ job, onDeleted, onStatusUpdate }: Ne
       body: JSON.stringify({ jobId: job.id, scheduledAt }),
     });
     if (res.ok) {
+       notify({
+         tone: 'success',
+         title: 'Newsletter scheduled',
+         message: `It will be sent ${new Date(scheduledAt).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })}.`,
+       });
        if (onStatusUpdate) onStatusUpdate('APPROVED');
        else window.location.reload();
     } else {
-       const err = await res.json();
-       alert(err.error || 'Failed to schedule');
+       const err = await res.json().catch(() => ({}));
+       notify({ tone: 'error', title: "Couldn't schedule newsletter", message: err.error || 'Please try again.' });
     }
   };
 
@@ -55,11 +69,20 @@ export default function NewsletterPreview({ job, onDeleted, onStatusUpdate }: Ne
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this newsletter?')) return;
+    const ok = await confirm({
+      title: 'Delete this newsletter?',
+      message: `"${job.subject || 'Untitled newsletter'}" will be permanently removed. This can't be undone.`,
+      confirmLabel: 'Delete newsletter',
+      tone: 'danger',
+    });
+    if (!ok) return;
     const res = await fetch(`/api/newsletters/${job.id}`, { method: 'DELETE' });
     if (res.ok) {
+       notify({ tone: 'success', message: 'Newsletter deleted.' });
        if (onDeleted) onDeleted();
        else window.location.reload();
+    } else {
+       notify({ tone: 'error', title: "Couldn't delete newsletter", message: 'Please try again.' });
     }
   };
 
@@ -80,13 +103,13 @@ export default function NewsletterPreview({ job, onDeleted, onStatusUpdate }: Ne
           <div className="flex space-x-2">
             <button
               onClick={() => setView('desktop')}
-              className={`px-3 py-1 text-xs rounded ${view === 'desktop' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}
+              className={`px-3 py-1 text-xs rounded ${view === 'desktop' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}
             >
               Desktop
             </button>
             <button
               onClick={() => setView('mobile')}
-              className={`px-3 py-1 text-xs rounded ${view === 'mobile' ? 'bg-indigo-600 text-white' : 'bg-gray-200'}`}
+              className={`px-3 py-1 text-xs rounded ${view === 'mobile' ? 'bg-brand-600 text-white' : 'bg-gray-200'}`}
             >
               Mobile
             </button>
@@ -94,6 +117,16 @@ export default function NewsletterPreview({ job, onDeleted, onStatusUpdate }: Ne
         </div>
 
         <div className="flex items-center space-x-2">
+           {job.htmlContent && !['SENT', 'PROCESSING'].includes(job.status) && (
+             <button
+               onClick={() => setPickerOpen(true)}
+               disabled={!canChangeLayout}
+               title={canChangeLayout ? 'Pick a different layout for this newsletter' : 'Regenerate this newsletter to enable layouts'}
+               className="px-3 py-1 text-xs font-medium text-brand-700 bg-brand-50 hover:bg-brand-100 rounded border border-brand-100 disabled:opacity-50"
+             >
+               Change layout
+             </button>
+           )}
            <button onClick={handleDelete} className="px-3 py-1 text-xs font-medium text-red-600 hover:bg-red-50 rounded">
              Delete
            </button>
@@ -105,7 +138,7 @@ export default function NewsletterPreview({ job, onDeleted, onStatusUpdate }: Ne
                     type="datetime-local"
                     value={scheduledAt}
                     onChange={(e) => setScheduledAt(e.target.value)}
-                    className="text-[11px] border border-gray-300 rounded px-1 py-0.5 bg-white focus:ring-indigo-500 focus:border-indigo-500"
+                    className="text-[11px] border border-gray-300 rounded px-1 py-0.5 bg-white focus:ring-brand-500 focus:border-brand-500"
                   />
                </div>
                <div className="flex items-center space-x-2">
@@ -121,7 +154,7 @@ export default function NewsletterPreview({ job, onDeleted, onStatusUpdate }: Ne
            {job.status === 'REJECTED' && (
               <button
                 onClick={() => handleStatusUpdateAction('AWAITING_APPROVAL')}
-                className="px-3 py-1 text-xs font-medium text-indigo-600 hover:bg-indigo-50 rounded"
+                className="px-3 py-1 text-xs font-medium text-brand-600 hover:bg-brand-50 rounded"
               >
                 Restore to Draft
               </button>
@@ -135,13 +168,7 @@ export default function NewsletterPreview({ job, onDeleted, onStatusUpdate }: Ne
           style={{ height: 'fit-content', minHeight: '100%' }}
         >
           {job.htmlContent ? (
-            <iframe
-              srcDoc={job.htmlContent}
-              title="Newsletter Preview"
-              className="w-full h-full border-none"
-              style={{ minHeight: '800px' }}
-              sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox" // Allow links to open in new tabs
-            />
+            <EmailFrame html={job.htmlContent} title="Newsletter Preview" />
           ) : (
             <div className="flex items-center justify-center h-full text-gray-400 italic">
               Generation in progress...
@@ -164,12 +191,26 @@ export default function NewsletterPreview({ job, onDeleted, onStatusUpdate }: Ne
             <button
               onClick={handleRequestEdit}
               disabled={!editNote || isRegenerating}
-              className="px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded hover:bg-indigo-700 disabled:opacity-50"
+              className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded hover:bg-brand-700 disabled:opacity-50"
             >
               {isRegenerating ? 'Regenerating...' : 'Regenerate'}
             </button>
           </div>
         </div>
+      )}
+
+      {pickerOpen && (
+        <LayoutPickerModal
+          jobId={job.id}
+          currentLayoutId={job.layoutId ?? null}
+          onClose={() => setPickerOpen(false)}
+          onApplied={(updated) => {
+            setPickerOpen(false);
+            notify({ tone: 'success', message: 'Layout updated. Your content stayed the same.' });
+            if (onJobUpdate) onJobUpdate(updated);
+            else window.location.reload();
+          }}
+        />
       )}
     </div>
   );

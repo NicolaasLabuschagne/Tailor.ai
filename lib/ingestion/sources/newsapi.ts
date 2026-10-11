@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { RawArticle } from '../types';
+import { RawArticle, orQuery } from '../types';
 
 let dailyCallCount = 0;
 const MAX_DAILY_CALLS = 80;
@@ -11,22 +11,18 @@ export async function fetchNewsAPI(params: { keywords: string[], language: strin
   }
 
   try {
-    // Requirements: "Always append country=us parameter"
-    // Requirement also implies filtering.
-    // Since /everything doesn't support country=us, we use top-headlines for general
-    // or just pass it to everything (ignored) and rely on the pipeline.
-    // However, if we want to BE US-only as requested,
-    // we should use sources from US if using /everything.
-
-    const q = params.keywords.join(' OR ');
-    const response = await axios.get('https://newsapi.org/v2/top-headlines', {
+    // /top-headlines returns almost nothing for keyword ORs, so search /everything instead.
+    // It has no country filter; relevance ranking downstream keeps results on-topic.
+    const response = await axios.get('https://newsapi.org/v2/everything', {
       params: {
-        q,
-        country: 'us',
-        language: 'en',
+        q: orQuery(params.keywords),
+        language: params.language,
+        sortBy: 'publishedAt',
+        from: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString(),
         apiKey: process.env.NEWSAPI_KEY,
         pageSize: 20
-      }
+      },
+      timeout: 10000,
     });
 
     dailyCallCount++;
@@ -36,6 +32,7 @@ export async function fetchNewsAPI(params: { keywords: string[], language: strin
       description: a.description || '',
       url: a.url,
       source: a.source.name,
+      imageUrl: a.urlToImage || undefined,
       publishedAt: new Date(a.publishedAt)
     }));
   } catch (error: any) {

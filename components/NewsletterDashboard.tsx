@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import NewsletterPreview from './NewsletterPreview';
 import StatusBadge from './StatusBadge';
+import { useDialogs } from './ui/Dialogs';
 
 interface NewsletterJob {
   id: string;
@@ -11,6 +12,8 @@ interface NewsletterJob {
   htmlContent: string | null;
   previewText: string | null;
   editNote: string | null;
+  contentJson?: string | null;
+  layoutId?: string | null;
   createdAt: Date | string;
 }
 
@@ -19,12 +22,20 @@ interface Props {
 }
 
 export default function NewsletterDashboard({ initialJobs }: Props) {
+  const { confirm, notify } = useDialogs();
   const [jobs, setJobs] = useState(initialJobs);
   const [selectedJob, setSelectedJob] = useState<NewsletterJob | null>(initialJobs[0] || null);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Are you sure you want to delete this newsletter?')) return;
+    const job = jobs.find(j => j.id === id);
+    const ok = await confirm({
+      title: 'Delete this newsletter?',
+      message: `"${job?.subject || 'Untitled newsletter'}" will be permanently removed. This can't be undone.`,
+      confirmLabel: 'Delete newsletter',
+      tone: 'danger',
+    });
+    if (!ok) return;
 
     const res = await fetch(`/api/newsletters/${id}`, { method: 'DELETE' });
     if (res.ok) {
@@ -33,6 +44,9 @@ export default function NewsletterDashboard({ initialJobs }: Props) {
       if (selectedJob?.id === id) {
         setSelectedJob(updated[0] || null);
       }
+      notify({ tone: 'success', message: 'Newsletter deleted.' });
+    } else {
+      notify({ tone: 'error', title: "Couldn't delete newsletter", message: 'Please try again.' });
     }
   };
 
@@ -60,7 +74,7 @@ export default function NewsletterDashboard({ initialJobs }: Props) {
           <div
             key={job.id}
             onClick={() => setSelectedJob(job)}
-            className={`bg-white shadow rounded-lg p-4 border transition-colors cursor-pointer ${selectedJob?.id === job.id ? 'border-indigo-500 ring-1 ring-indigo-500' : 'border-gray-200 hover:border-indigo-300'}`}
+            className={`bg-white shadow rounded-lg p-4 border transition-colors cursor-pointer ${selectedJob?.id === job.id ? 'border-brand-500 ring-1 ring-brand-500' : 'border-gray-200 hover:border-brand-300'}`}
           >
             <div className="flex justify-between items-start mb-2">
               <StatusBadge status={job.status} />
@@ -101,10 +115,14 @@ export default function NewsletterDashboard({ initialJobs }: Props) {
 
       <div className="lg:col-span-2">
         {selectedJob ? (
-          <NewsletterPreview job={selectedJob} onDeleted={() => {
+          <NewsletterPreview key={selectedJob.id} job={selectedJob} onDeleted={() => {
              const updated = jobs.filter(j => j.id !== selectedJob.id);
              setJobs(updated);
              setSelectedJob(updated[0] || null);
+          }} onJobUpdate={(updated) => {
+             const merged = { ...selectedJob, ...updated };
+             setJobs(jobs.map(j => j.id === merged.id ? merged : j));
+             setSelectedJob(merged);
           }} onStatusUpdate={(status) => {
              const updatedJobs = jobs.map(j => j.id === selectedJob.id ? { ...selectedJob, status } : j);
              setJobs(updatedJobs);

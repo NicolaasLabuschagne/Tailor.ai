@@ -96,7 +96,7 @@ export default function TemplateCustomizer({ initialTemplate }: Props) {
         </div>
 
         <div className="flex items-center space-x-4 pt-4">
-          <button type="submit" disabled={isSaving} className="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 disabled:opacity-50">
+          <button type="submit" disabled={isSaving} className="bg-brand-600 text-white px-6 py-2 rounded-md hover:bg-brand-700 disabled:opacity-50">
             {isSaving ? 'Saving...' : 'Save Design'}
           </button>
           {message && <span className="text-sm font-medium text-green-600">{message}</span>}

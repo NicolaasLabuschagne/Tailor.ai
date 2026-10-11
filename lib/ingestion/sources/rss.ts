@@ -2,7 +2,9 @@ import Parser from 'rss-parser';
 import he from 'he';
 import { RawArticle } from '../types';
 
-const parser = new Parser();
+const parser = new Parser({
+  customFields: { item: [['media:content', 'mediaContent'], ['media:thumbnail', 'mediaThumbnail']] },
+});
 
 export const TOPIC_FEEDS: Record<string, string[]> = {
   real_estate: [
@@ -100,6 +102,7 @@ export async function fetchRSS(urls: string[], keywords: string[], hoursCutoff: 
           description: cleanDescription,
           url: item.link || '',
           source: feed.title || 'RSS Feed',
+          imageUrl: rssImage(item),
           publishedAt: pubDate,
         });
       }
@@ -107,4 +110,13 @@ export async function fetchRSS(urls: string[], keywords: string[], hoursCutoff: 
   }
 
   return articles;
+}
+
+function rssImage(item: any): string | undefined {
+  const candidates = [
+    item.enclosure?.type?.startsWith('image') ? item.enclosure.url : undefined,
+    item.mediaContent?.$?.url,
+    item.mediaThumbnail?.$?.url,
+  ];
+  return candidates.find((u) => typeof u === 'string' && u.startsWith('https'));
 }

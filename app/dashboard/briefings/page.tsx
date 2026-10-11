@@ -22,7 +22,7 @@ export default async function BriefingsDashboard() {
   return (
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div className="mb-6">
-        <Link href="/dashboard" className="text-indigo-600 hover:text-indigo-500 text-sm font-medium flex items-center">
+        <Link href="/dashboard" className="text-brand-600 hover:text-brand-500 text-sm font-medium flex items-center">
           &larr; Back to Dashboard
         </Link>
       </div>
@@ -46,7 +46,7 @@ export default async function BriefingsDashboard() {
                 <Link href={`/dashboard/briefings/${briefing.id}`} className="block hover:bg-gray-50">
                   <div className="px-4 py-4 sm:px-6 flex items-center justify-between">
                     <div className="flex flex-col">
-                      <p className="text-sm font-medium text-indigo-600 truncate">
+                      <p className="text-sm font-medium text-brand-600 truncate">
                         {briefing.subject || 'Generating Briefing...'}
                       </p>
                       <p className="text-xs text-gray-400 mt-1">

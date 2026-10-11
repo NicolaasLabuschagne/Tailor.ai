@@ -64,9 +64,9 @@ export default async function DashboardPage() {
           <div className="bg-white shadow rounded-lg p-6 border border-gray-100">
             <h2 className="text-lg font-medium text-gray-900 mb-4">Business Newsletter Summary</h2>
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-indigo-50 p-4 rounded-md">
-                <p className="text-sm text-indigo-600 font-medium">Sent This Month</p>
-                <p className="text-2xl font-bold text-indigo-900">{newslettersSentThisMonth}</p>
+              <div className="bg-brand-50 p-4 rounded-md">
+                <p className="text-sm text-brand-600 font-medium">Sent This Month</p>
+                <p className="text-2xl font-bold text-brand-900">{newslettersSentThisMonth}</p>
               </div>
               <div className="bg-green-50 p-4 rounded-md">
                 <p className="text-sm text-green-600 font-medium">Active Subscribers</p>
@@ -83,7 +83,7 @@ export default async function DashboardPage() {
 
             <Link
               href="/dashboard/newsletters"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-600 hover:bg-brand-700"
             >
               Generate newsletter now
             </Link>
@@ -114,7 +114,7 @@ export default async function DashboardPage() {
 
             <Link
               href="/dashboard/briefings"
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-indigo-600 hover:bg-indigo-700"
+              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-brand-600 hover:bg-brand-700"
             >
               Go to briefings
             </Link>

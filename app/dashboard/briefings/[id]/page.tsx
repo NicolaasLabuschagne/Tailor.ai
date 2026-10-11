@@ -24,7 +24,7 @@ export default async function BriefingPage({ params }: { params: { id: string } 
   return (
     <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
       <div className="mb-6 flex items-center justify-between">
-        <Link href="/dashboard/briefings" className="text-indigo-600 hover:text-indigo-500 text-sm font-medium flex items-center">
+        <Link href="/dashboard/briefings" className="text-brand-600 hover:text-brand-500 text-sm font-medium flex items-center">
           &larr; Back to all briefings
         </Link>
         <div className="flex space-x-2">
